@@ -1,0 +1,61 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: Service WMTS
+paths:
+  /rest/checker:
+    get:
+      summary: Route to check if the service is up.
+      operationId: checker
+      tags:
+        - checker
+      responses:
+        "200":
+          description: Returning OK.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Always true for 200 response.
+                  message:
+                    type: string
+                  version:
+                    type: string
+                    description: Application version string (SemVer 2.0)
+                example:
+                  success: true
+                  message: "OK"
+                  version: "v0.2.0-beta.1"
+        "500":
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+                example:
+                  success: false
+                  error:
+                    code: 500
+                    message: "An internal error occurred"
+
+
+components:
+  schemas:
+    error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Always false in case of error.
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              description: Error code.
+            message:
+              type: string
+              description: Description of the error.
