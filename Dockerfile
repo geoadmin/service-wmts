@@ -1,20 +1,33 @@
 # Buster slim python 3.7 base image.
 FROM python:3.7-slim-buster
-ENV HTTP_PORT 8080
+ENV HTTP_PORT 9000
 RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
 
 
 # HERE : install relevant packages
-# RUN apt-get update && apt-get install -y [packages] \
-#  && apt-get clean \
-#  && rm -rf /var/lib/apt/lists/*
+RUN pip3 install pipenv \
+    && pipenv --version
 
-WORKDIR /app
-COPY "./requirements.txt" "/app/requirements.txt"
+COPY Pipfile* /tmp/
+RUN cd /tmp && \
+    pipenv install --system --deploy --ignore-pipfile
 
-RUN pip3 install -r requirements.txt
+WORKDIR /service-wmts
+COPY --chown=geoadmin:geoadmin ./ /service-wmts/
 
-COPY --chown=geoadmin:geoadmin ./ /app/
+ARG GIT_HASH=unknown
+ARG GIT_BRANCH=unknown
+ARG GIT_DIRTY=""
+ARG VERSION=unknown
+ARG AUTHOR=unknown
+LABEL git.hash=$GIT_HASH
+LABEL git.branch=$GIT_BRANCH
+LABEL git.dirty="$GIT_DIRTY"
+LABEL version=$VERSION
+LABEL author=$AUTHOR
+
+# Overwrite the version.py from source with the actual version
+RUN echo "APP_VERSION = '$VERSION'" > /service-wmts/app/version.py
 
 USER geoadmin
 
