@@ -6,12 +6,10 @@ SERVICE_NAME := service-wmts
 
 CURRENT_DIR := $(shell pwd)
 
-# Test report configuration
-TEST_REPORT_DIR ?= $(CURRENT_DIR)/tests/report
-TEST_REPORT_FILE ?= nose2-junit.xml
-
 # general targets timestamps
 TIMESTAMPS = .timestamps
+VOLUMES_MINIO = .volumes/minio
+LOGS_DIR = $(PWD)/logs
 REQUIREMENTS_TIMESTAMP = $(TIMESTAMPS)/.requirements.timestamp
 DEV_REQUIREMENTS_TIMESTAMP = $(TIMESTAMPS)/.dev-requirements.timestamps
 
@@ -26,7 +24,7 @@ PIP_FILE = Pipfile
 PIP_FILE_LOCK = Pipfile.lock
 
 # default configuration
-HTTP_PORT ?= 5000
+WMTS_PORT ?= 9000
 
 # Commands
 PIPENV_RUN := pipenv run
@@ -63,8 +61,8 @@ help:
 	@echo "- format-lint        Format and lint the python source code"
 	@echo "- test               Run the tests"
 	@echo -e " \033[1mLOCAL SERVER TARGETS\033[0m "
-	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable HTTP_PORT (default: 5000)"
-	@echo "- gunicornserve      Run the project using the gunicorn WSGI server. Port can be set by Env variable DEBUG_HTTP_PORT (default: 5000)"
+	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable WMTS_PORT (default: 5000)"
+	@echo "- gunicornserve      Run the project using the gunicorn WSGI server. Port can be set by Env variable DEBUG_WMTS_PORT (default: 5000)"
 	@echo -e " \033[1mDocker TARGETS\033[0m "
 	@echo "- dockerbuild        Build the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG)) using the gunicorn WSGI server inside a container"
 	@echo "- dockerpush         Build and push the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG))"
@@ -79,11 +77,13 @@ help:
 
 .PHONY: dev
 dev: $(DEV_REQUIREMENTS_TIMESTAMP)
+	docker-compose up -d
 	pipenv shell
 
 
 .PHONY: setup
 setup: $(REQUIREMENTS_TIMESTAMP)
+	docker-compose up -d
 	pipenv shell
 
 .PHONY: ci
@@ -113,26 +113,25 @@ format-lint: format lint
 
 .PHONY: test
 test: $(DEV_REQUIREMENTS_TIMESTAMP)
-	mkdir -p $(TEST_REPORT_DIR)
-	$(NOSE) -c tests/unittest.cfg --verbose --junit-xml-path $(TEST_REPORT_DIR)/$(TEST_REPORT_FILE) -s tests/
+	$(NOSE) -c tests/unittest.cfg --verbose -s tests/
 
 
 # Serve targets. Using these will run the application on your local machine. You can either serve with a wsgi front (like it would be within the container), or without.
 
 .PHONY: serve
-serve: $(REQUIREMENTS_TIMESTAMP)
-	FLASK_APP=$(subst -,_,$(SERVICE_NAME)) FLASK_DEBUG=1 $(FLASK) run --host=0.0.0.0 --port=$(HTTP_PORT)
+serve: clean_logs $(REQUIREMENTS_TIMESTAMP) $(LOGS_DIR)
+	LOGS_DIR=$(LOGS_DIR) FLASK_APP=$(subst -,_,$(SERVICE_NAME)) FLASK_DEBUG=1 $(FLASK) run --host=0.0.0.0 --port=$(WMTS_PORT)
 
 
 .PHONY: gunicornserve
-gunicornserve: $(REQUIREMENTS_TIMESTAMP)
-	$(PYTHON) wsgi.py
+gunicornserve: clean_logs $(REQUIREMENTS_TIMESTAMP) $(LOGS_DIR)
+	LOGS_DIR=$(LOGS_DIR) $(PYTHON) wsgi.py
 
 
 # Docker related functions.
 
 .PHONY: dockerbuild
-dockerbuild:
+dockerbuild: $(VOLUMES_MINIO)
 	docker build \
 		--build-arg GIT_HASH="$(GIT_HASH)" \
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
@@ -147,14 +146,22 @@ dockerpush: dockerbuild
 
 
 .PHONY: dockerrun
-dockerrun: dockerbuild
-	HTTP_PORT=$(HTTP_PORT) docker-compose up
+dockerrun: clean_logs dockerbuild $(LOGS_DIR)
+	LOGS_DIR=/logs docker run \
+		-it --rm --net=host \
+		--env LOGS_DIR=/logs \
+		--mount type=bind,source="$$(pwd)"/logs,target=/logs \
+		$(DOCKER_IMG_LOCAL_TAG)
 
 
 .PHONY: shutdown
 shutdown:
-	HTTP_PORT=$(HTTP_PORT) docker-compose down
+	docker-compose down
 
+
+.PHONY: clean_logs
+clean_logs:
+	rm -rf $(LOGS_DIR)
 
 .PHONY: clean_venv
 clean_venv:
@@ -163,10 +170,11 @@ clean_venv:
 
 .PHONY: clean
 clean: clean_venv
+	docker-compose down --rmi local
 	@# clean python cache files
 	find . -name __pycache__ -type d -print0 | xargs -I {} -0 rm -rf "{}"
-	rm -rf $(TEST_REPORT_DIR)
 	rm -rf $(TIMESTAMPS)
+	rm -rf $(LOGS_DIR)
 
 
 # Actual builds targets with dependencies
@@ -175,11 +183,19 @@ $(TIMESTAMPS):
 	mkdir -p $(TIMESTAMPS)
 
 
-$(REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) $(PIP_FILE) $(PIP_FILE_LOCK)
+$(VOLUMES_MINIO):
+	mkdir -p $(VOLUMES_MINIO)
+
+
+$(LOGS_DIR):
+	mkdir -p -m=777 $(LOGS_DIR)
+
+
+$(REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(PIP_FILE) $(PIP_FILE_LOCK)
 	pipenv install
 	@touch $(REQUIREMENTS_TIMESTAMP)
 
 
-$(DEV_REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) $(PIP_FILE) $(PIP_FILE_LOCK)
+$(DEV_REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(PIP_FILE) $(PIP_FILE_LOCK)
 	pipenv install --dev
 	@touch $(DEV_REQUIREMENTS_TIMESTAMP)

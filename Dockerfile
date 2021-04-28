@@ -1,6 +1,6 @@
 # Buster slim python 3.7 base image.
 FROM python:3.7-slim-buster
-ENV HTTP_PORT 9000
+ENV WMTS_PORT 9000
 RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
 
 
@@ -31,7 +31,7 @@ RUN echo "APP_VERSION = '$VERSION'" > /service-wmts/app/version.py
 
 USER geoadmin
 
-EXPOSE $HTTP_PORT
+EXPOSE $WMTS_PORT
 
 # Use a real WSGI server
 ENTRYPOINT ["python3", "wsgi.py"]

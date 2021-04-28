@@ -4,6 +4,8 @@ disable_existing_loggers: False # this allow to get logger at module level
 root:
   handlers:
     - console
+    - file-standard
+    - file-json
   level: DEBUG
   propagate: True
 
@@ -15,10 +17,14 @@ loggers:
     level: DEBUG
     handlers:
       - console
+      - file-standard
+      - file-json
   gunicorn.access:
     level: DEBUG
     handlers:
       - console
+      - file-standard
+      - file-json
 
 filters:
   application:
@@ -39,9 +45,12 @@ filters:
 
 formatters:
   standard:
+    (): logging_utilities.formatters.extra_formatter.ExtraFormatter
     format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
   verbose:
-    format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s : url=%(request_url)s headers=%(request_headers)s payload=%(request_json)s"
+    (): logging_utilities.formatters.extra_formatter.ExtraFormatter
+    format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
+    extra_fmt: " : url=%(request_url)s headers=%(request_headers)s payload=%(request_json)s"
   json:
     (): logging_utilities.formatters.json_formatter.JsonFormatter
     add_always_extra: True
@@ -78,6 +87,23 @@ handlers:
     formatter: standard
     stream: ext://sys.stdout
     filters:
-      - application
+      - isotime
+      - flask
+  file-standard:
+    level: DEBUG
+    class: logging.FileHandler
+    formatter: verbose
+    filename: ${LOGS_DIR}/server-standard-logs.txt
+    mode: w
+    filters:
+      - isotime
+      - flask
+  file-json:
+    level: DEBUG
+    class: logging.FileHandler
+    formatter: json
+    filename: ${LOGS_DIR}/server-json-logs.json
+    mode: w
+    filters:
       - isotime
       - flask

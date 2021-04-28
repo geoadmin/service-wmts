@@ -4,15 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+nose2 = "*"
 PyYAML = "~=5.3.1"
 gevent = "~=20.9.0"
 gunicorn = "~=19.9.0"
 Flask = "~=1.1.1"
-logging-utilities = "~=1.0.0"
+logging-utilities = "~=1.2.0"
+celery = "~=5.0.5"
 
 [dev-packages]
 yapf = "*"
-nose2 = "*"
 pylint = "*"
 pylint-flask = "*"
 

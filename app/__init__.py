@@ -4,7 +4,7 @@ from werkzeug.exceptions import HTTPException
 
 from flask import Flask
 
-from app.helpers import ALLOWED_DOMAINS_PATTERN
+from app.celery import make_celery
 from app.helpers import make_error_msg
 from app.middleware import ReverseProxy
 
@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 # Standard Flask application initialization
 
 app = Flask(__name__)
+# TODO check if the reverse proxy is needed or not
 app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
+celery = make_celery(app)
 
 
 # Add CORS Headers to all request
