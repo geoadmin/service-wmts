@@ -5,8 +5,8 @@ from os import path
 
 import yaml
 
-from flask import make_response
 from flask import jsonify
+from flask import make_response
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,14 @@ ALLOWED_DOMAINS_PATTERN = '({})'.format('|'.join(ALLOWED_DOMAINS))
 
 
 def make_error_msg(code, msg):
-    return make_response(jsonify({'success': False, 'error': {'code': code, 'message': msg}}), code)
+    return make_response(
+        jsonify({
+            'success': False, 'error': {
+                'code': code, 'message': msg
+            }
+        }),
+        code
+    )
 
 
 def get_logging_cfg():
