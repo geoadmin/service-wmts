@@ -57,6 +57,7 @@ help:
 	@echo "- ci                 Create the python virtual environment and install requirements based on the Pipfile.lock"
 	@echo -e " \033[1mFORMATING, LINTING AND TESTING TOOLS TARGETS\033[0m "
 	@echo "- format             Format the python source code"
+	@echo "- ci-check-format    Format the python source code and check if any files has changed. This is meant to be used by the CI."
 	@echo "- lint               Lint the python source code"
 	@echo "- format-lint        Format and lint the python source code"
 	@echo "- test               Run the tests"
@@ -98,6 +99,13 @@ format: $(DEV_REQUIREMENTS_TIMESTAMP)
 	$(YAPF) -p -i --style .style.yapf $(PYTHON_FILES)
 	$(ISORT) $(PYTHON_FILES)
 
+
+.PHONY: ci-check-format
+ci-check-format: format
+	@if [[ -n `git status --porcelain` ]]; then \
+	 	>&2 echo "ERROR: Code was not formatted correctly"; \
+		exit 1; \
+	fi
 
 
 .PHONY: lint
