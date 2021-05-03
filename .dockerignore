@@ -14,8 +14,15 @@ docker-compose.yml.in
 __pycache__
 
 # Files not used within docker
-./tests/*
 Makefile
 .venv
 lib-makefiles/*
 buildspec.yml
+.volumes
+.isort.cfg
+.pylintrc
+.style.yapf
+.env.local
+minio.env
+.github
+logs/

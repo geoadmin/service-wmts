@@ -70,6 +70,7 @@ disable=missing-docstring,
     bad-continuation,   # bad-continuation doesn't comply with yapf, so lets
                         # yapf correct indentation continuation issue
     useless-object-inheritance,
+    fixme # remove this when done
 
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -198,7 +199,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=100
+max-line-length=80
 
 # Maximum number of lines in a module.
 max-module-lines=1000

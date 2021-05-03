@@ -16,18 +16,13 @@ services:
       RABBITMQ_PORT: 5672
     network_mode: "host"
   celery-workers:
-    image: "swisstopo/service-wmts:celery-workers-local"
+    image: "swisstopo/service-wmts:celery-workers-ci"
     build: .
-    volumes:
-      - type: bind
-        source: "${PWD}/logs"
-        target: /logs
     environment:
       WMTS_PORT: 9000
       WMS_PORT: 8000
       RABBITMQ_PORT: 5672
-      LOGS_DIR: /logs
-      LOGGING_CFG: /service-wmts/config/logging-cfg-local.yml
+      LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
     entrypoint: []
     command:
       - celery
@@ -41,3 +36,16 @@ services:
     depends_on:
       - rabbitmq
     network_mode: "host"
+  app:
+    image: "swisstopo/service-wmts:ci"
+    build: .
+    ports:
+      - "9000:8080"
+    entrypoint: nose2 -c tests/unittest.cfg --verbose -s tests/
+    environment:
+      WMTS_PORT: 9000
+      WMS_PORT: 8000
+      RABBITMQ_PORT: 5672
+      LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
+    depends_on:
+      - celery-workers
