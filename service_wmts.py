@@ -1,6 +1,6 @@
 '''Service launcher to use Flask without wsgi.py
 '''
-from app.helpers import init_logging
+from app.helpers.logging_utils import init_logging
 
 # Initialize Logging using JSON format for all loggers and using the Stream
 # Handler.

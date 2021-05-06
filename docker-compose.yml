@@ -1,43 +1,31 @@
 version: "3.4"
 services:
-  s3:
-    image: minio/minio
-    env_file: ./minio.env
-    command: server /data
-    volumes:
-      - type: bind
-        source: ${PWD}/.volumes/minio
-        target: /data
+  wms-bod:
+    image: swisstopo/mapserver-base:201806061459
+    environment:
+      - APACHE_PORT=80
+      - MS_ERRORFILE=stderr
+      - MS_DEBUGLEVEL=0
+      - FCGID_IO_TIMEOUT=30
+      - FCGID_BUSY_TIMEOUT=30
+      - FCGID_BUSY_SCAN_INTERVAL=10
+      - FCGID_IO_TIMEOUT=27
+      - FCGID_BUSY_TIMEOUT=27
+      - FCGID_BUSY_SCAN_INTERVAL=5
+      - FCGID_MAX_PROCESSES=200
+      - FCGID_MAX_REQUESTS_PER_PROCESS=1000
+      - APACHE_LOG_LEVEL=debug
     ports:
-      - 9090:9000
-  rabbitmq:
-    image: rabbitmq:3.6-alpine
+      - 8000:80
+  db:
+    image: kartoza/postgis:12.0
     environment:
-      RABBITMQ_PORT: 5672
-    network_mode: "host"
-  celery-workers:
-    image: "swisstopo/service-wmts:celery-workers-local"
-    build: .
+      - POSTGRES_DB=bod_local
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 15432:5432
     volumes:
       - type: bind
-        source: "${PWD}/logs"
-        target: /logs
-    environment:
-      WMTS_PORT: 9000
-      WMS_PORT: 8000
-      RABBITMQ_PORT: 5672
-      LOGS_DIR: /logs
-      LOGGING_CFG: /service-wmts/config/logging-cfg-local.yml
-    entrypoint: []
-    command:
-      - celery
-      - -A
-      - app.celery
-      - worker
-      - -P
-      - gevent
-      - --autoscale=17,8
-      - --loglevel=info
-    depends_on:
-      - rabbitmq
-    network_mode: "host"
+        source: ${PWD}/scripts/sql/init_local_db.sql
+        target: /docker-entrypoint-initdb.d/setup-db.sql

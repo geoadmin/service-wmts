@@ -40,6 +40,8 @@ phases:
       - make ci-check-format
       - echo "linting code"
       - make lint
+      - echo "linting openapi spec"
+      - make lint-spec
 
   build:
     commands:

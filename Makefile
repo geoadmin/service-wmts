@@ -60,15 +60,16 @@ help:
 	@echo "- ci-check-format    Format the python source code and check if any files has changed. This is meant to be used by the CI."
 	@echo "- lint               Lint the python source code"
 	@echo "- format-lint        Format and lint the python source code"
+	@echo "- lint-spec          Lint the openapi spec"
 	@echo "- test               Run the tests"
 	@echo -e " \033[1mLOCAL SERVER TARGETS\033[0m "
 	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable WMTS_PORT (default: 5000)"
 	@echo "- gunicornserve      Run the project using the gunicorn WSGI server. Port can be set by Env variable DEBUG_WMTS_PORT (default: 5000)"
+	@echo "- serve-spec         Serve the spec using Redoc on localhost:8080"
 	@echo -e " \033[1mDocker TARGETS\033[0m "
 	@echo "- dockerbuild        Build the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG)) using the gunicorn WSGI server inside a container"
 	@echo "- dockerpush         Build and push the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG))"
 	@echo "- dockerrun          Run the project using the gunicorn WSGI server inside a container (exposed port: 5000)"
-	@echo "- shutdown           Stop the aforementioned container"
 	@echo -e " \033[1mCLEANING TARGETS\033[0m "
 	@echo "- clean              Clean genereated files"
 	@echo "- clean_venv         Clean python venv"
@@ -78,13 +79,11 @@ help:
 
 .PHONY: dev
 dev: $(DEV_REQUIREMENTS_TIMESTAMP)
-	docker-compose up -d
 	pipenv shell
 
 
 .PHONY: setup
 setup: $(REQUIREMENTS_TIMESTAMP)
-	docker-compose up -d
 	pipenv shell
 
 .PHONY: ci
@@ -157,15 +156,26 @@ dockerpush: dockerbuild
 dockerrun: clean_logs dockerbuild $(LOGS_DIR)
 	LOGS_DIR=/logs docker run \
 		-it --rm --net=host \
+		--env-file=${PWD}/.env.local \
 		--env LOGS_DIR=/logs \
 		--mount type=bind,source="$$(pwd)"/logs,target=/logs \
 		$(DOCKER_IMG_LOCAL_TAG)
 
 
-.PHONY: shutdown
-shutdown:
-	docker-compose down
+# Spec targets
 
+.PHONY: lint-spec
+lint-spec:
+	docker run --volume "$(PWD)":/data jamescooke/openapi-validator -e openapi.yml
+
+
+.PHONY: serve-spec
+serve-spec:
+	docker run -it --rm -p 8080:80 \
+		-v "$(PWD)/openapi.yml":/usr/share/nginx/html/openapi.yml \
+		-e SPEC_URL=openapi.yml redocly/redoc
+
+# Clean targets
 
 .PHONY: clean_logs
 clean_logs:
@@ -177,12 +187,10 @@ clean_venv:
 
 
 .PHONY: clean
-clean: clean_venv
-	docker-compose down --rmi local
+clean: clean_venv clean_logs
 	@# clean python cache files
 	find . -name __pycache__ -type d -print0 | xargs -I {} -0 rm -rf "{}"
 	rm -rf $(TIMESTAMPS)
-	rm -rf $(LOGS_DIR)
 
 
 # Actual builds targets with dependencies
@@ -199,11 +207,14 @@ $(LOGS_DIR):
 	mkdir -p -m=777 $(LOGS_DIR)
 
 
-$(REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(PIP_FILE) $(PIP_FILE_LOCK)
+$(PIP_FILE_LOCK):
 	pipenv install
+
+
+$(REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(LOGS_DIR) $(PIP_FILE) $(PIP_FILE_LOCK)
 	@touch $(REQUIREMENTS_TIMESTAMP)
 
 
-$(DEV_REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(PIP_FILE) $(PIP_FILE_LOCK)
+$(DEV_REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(LOGS_DIR) $(PIP_FILE) $(PIP_FILE_LOCK)
 	pipenv install --dev
 	@touch $(DEV_REQUIREMENTS_TIMESTAMP)

@@ -1,16 +1,14 @@
-import os
-
 from celery import Celery
 from celery.signals import setup_logging
-from celery.utils.log import get_task_logger
 
-from app.helpers import init_logging
-
-logger = get_task_logger(__name__)
+from app import settings
+from app.helpers.logging_utils import init_logging
 
 
 @setup_logging.connect
 def on_setup_logging(**kwargs):
+    '''Initialize logging for celery worker
+    '''
     init_logging()
 
 
@@ -26,7 +24,7 @@ def make_celery(app):
     '''
     my_celery = Celery(
         app.import_name,
-        broker='amqp://localhost:%s' % os.getenv('RABBITMQ_PORT')
+        broker=f'amqp://{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}'
     )
     my_celery.conf.update(app.config)
 
