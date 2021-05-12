@@ -3,15 +3,14 @@ import logging
 import psycopg2 as psy
 
 from app import settings
+from app import cache
 
 logger = logging.getLogger(__name__)
-
-restrictions = {}
 
 
 def get_wms_config_by_layer(layer_id):
     try:
-        restriction = restrictions[layer_id]
+        restriction = get_wmsconfig_from_db()[layer_id]
         logger.debug('Restriction for layer %s: %s', layer_id, restriction)
         return restriction
     except KeyError as error:
@@ -19,6 +18,7 @@ def get_wms_config_by_layer(layer_id):
         return None
 
 
+@cache.cached(key_prefix='wmsconfig')
 def get_wmsconfig_from_db():
     # Connect to database
     logger.debug(
@@ -51,19 +51,21 @@ def get_wmsconfig_from_db():
         cursor.execute(
             """
             SELECT
-            tileset.fk_dataset_id
-            , array_agg(DISTINCT timestamp order by timestamp desc)
-            , max(resolution_min::float)
-            , min(resolution_max::float)
-            , coalesce(min(s3_resolution_max::float)
-            , min(resolution_max::float))
-            , array_agg(DISTINCT format)
-            , coalesce(cache_ttl,1800)
-            , max(wms_gutter)
-            FROM tileset tileset LEFT JOIN tileset_timestamps time ON
-            tileset.fk_dataset_id = time.fk_dataset_id
-            group by tileset.fk_dataset_id,
-            format, cache_ttl  ORDER BY tileset.fk_dataset_id
+                tileset.fk_dataset_id
+                , array_agg(DISTINCT timestamp order by timestamp desc)
+                , max(resolution_min::float)
+                , min(resolution_max::float)
+                , coalesce(min(s3_resolution_max::float)
+                , min(resolution_max::float))
+                , array_agg(DISTINCT format)
+                , coalesce(cache_ttl,1800)
+                , max(wms_gutter)
+            FROM tileset tileset
+            LEFT JOIN tileset_timestamps time ON
+                tileset.fk_dataset_id = time.fk_dataset_id
+                group by tileset.fk_dataset_id,
+                format, cache_ttl
+            ORDER BY tileset.fk_dataset_id
             """
         )
     except psy.Error as error:
@@ -89,6 +91,3 @@ def get_wmsconfig_from_db():
 
     logger.info("All restrictions generated")
     return _restrictions
-
-
-restrictions = get_wmsconfig_from_db()

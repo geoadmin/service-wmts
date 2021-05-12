@@ -1,3 +1,4 @@
+# pylint: disable=wrong-import-position
 import logging
 
 from kombu.serialization import registry
@@ -5,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 
 from flask import Flask
 from flask import request
+from flask_caching import Cache
 
 from app import settings
 from app.helpers.celery import make_celery
@@ -20,6 +22,7 @@ registry.enable('pickle')
 
 app = Flask(__name__)
 app.config.from_object('app.default_settings')
+cache = Cache(app)
 # TODO check if the reverse proxy is needed or not
 # app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 celery = make_celery(app)
@@ -55,7 +58,7 @@ def handle_exception(error):
     return make_error_msg(error.code, error.description)
 
 
-from app import routes  # pylint: disable=wrong-import-position
+from app import routes
 
 
 def main():
