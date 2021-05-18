@@ -9,17 +9,17 @@ logger = logging.getLogger(__name__)
 restrictions = {}
 
 
-def get_wms_config_by_layer(layer_id):
+def get_wmts_config_by_layer(layer_id):
     try:
         restriction = restrictions[layer_id]
         logger.debug('Restriction for layer %s: %s', layer_id, restriction)
         return restriction
     except KeyError as error:
-        logger.error('No wms configuration found for layer %s', layer_id)
+        logger.error('No wmts configuration found for layer %s', layer_id)
         return None
 
 
-def get_wmsconfig_from_db():
+def get_wmts_config_from_db():
     # Connect to database
     logger.debug(
         'Connecting to %s db on host %s',
@@ -91,4 +91,4 @@ def get_wmsconfig_from_db():
     return _restrictions
 
 
-restrictions = get_wmsconfig_from_db()
+restrictions = get_wmts_config_from_db()

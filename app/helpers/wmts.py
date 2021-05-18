@@ -7,7 +7,7 @@ from flask import request
 
 from app import settings
 from app.helpers.s3 import get_s3_img
-from app.helpers.wms_config import get_wms_config_by_layer
+from app.helpers.wmts_config import get_wmts_config_by_layer
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ def validate_wmts_request(
 
 def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
     # restriction checks based on bod values / getcap values go here
-    restriction = get_wms_config_by_layer(layer_id)
+    restriction = get_wmts_config_by_layer(layer_id)
     write_s3 = None
     if restriction:
         # timestamp
