@@ -123,11 +123,11 @@ make lint-spec
 | WMS_HOST  | `localhost` | Host name of the WMS service |
 | WMS_PORT  | `80`   | Port of the WMS service |
 | REFERER_URL | `https://proxywms.geo.admin.ch` | Referer header to use with the WMS backend |
-| WMS_DB_HOST | | WMS Postgresql database hostname |
-| WMS_DB_PORT | `5432` | WMS Postgresql database port |
-| WMS_DB_NAME | | WMS database name |
-| WMS_DB_USER | | WMS database user name |
-| WMS_DB_PASSWD | | WMS database user password |
+| BOD_DB_HOST | | WMS Postgresql database hostname |
+| BOD_DB_PORT | `5432` | WMS Postgresql database port |
+| BOD_DB_NAME | | WMS database name |
+| BOD_DB_USER | | WMS database user name |
+| BOD_DB_PASSWD | | WMS database user password |
 
 ### S3 2nd level caching settings
 

@@ -21,11 +21,11 @@ REFERER_URL = os.getenv('PROXYWMS_REFERER_URL', 'https://proxywms.geo.admin.ch')
 WMS_PORT = os.getenv('WMS_PORT', None)
 WMS_HOST = os.getenv('WMS_HOST', 'localhost')
 WMS_BACKEND = f'http://{WMS_HOST}{":" + WMS_PORT if WMS_PORT else ""}/mapserv'
-WMS_DB_NAME = os.environ['WMS_DB_NAME']
-WMS_DB_HOST = os.environ['WMS_DB_HOST']
-WMS_DB_PORT = os.getenv('WMS_DB_PORT', '5432')
-WMS_DB_USER = os.environ['WMS_DB_USER']
-WMS_DB_PASSWD = os.environ['WMS_DB_PASSWD']
+BOD_DB_NAME = os.environ['BOD_DB_NAME']
+BOD_DB_HOST = os.environ['BOD_DB_HOST']
+BOD_DB_PORT = os.getenv('BOD_DB_PORT', '5432')
+BOD_DB_USER = os.environ['BOD_DB_USER']
+BOD_DB_PASSWD = os.environ['BOD_DB_PASSWD']
 NO_CACHE = 'public, must-revalidate, proxy-revalidate, max-age=0'
 DEFAULT_CACHE = 'public, max-age=1800'
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')

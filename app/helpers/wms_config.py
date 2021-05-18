@@ -23,16 +23,16 @@ def get_wmsconfig_from_db():
     # Connect to database
     logger.debug(
         'Connecting to %s db on host %s',
-        settings.WMS_DB_NAME,
-        settings.WMS_DB_HOST
+        settings.BOD_DB_NAME,
+        settings.BOD_DB_HOST
     )
     try:
         connection = psy.connect(
-            dbname=settings.WMS_DB_NAME,
-            user=settings.WMS_DB_USER,
-            password=settings.WMS_DB_PASSWD,
-            host=settings.WMS_DB_HOST,
-            port=settings.WMS_DB_PORT,
+            dbname=settings.BOD_DB_NAME,
+            user=settings.BOD_DB_USER,
+            password=settings.BOD_DB_PASSWD,
+            host=settings.BOD_DB_HOST,
+            port=settings.BOD_DB_PORT,
             connect_timeout=5
         )
     except psy.Error as error:
