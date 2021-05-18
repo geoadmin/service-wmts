@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 req_session = requests.Session()
 req_session.mount('http://', requests.adapters.HTTPAdapter(max_retries=0))
+# TODO CLEAN_UP remove the https session which might not be needed if only
+# internally served.
 req_session.mount('https://', requests.adapters.HTTPAdapter(max_retries=0))
 
 
