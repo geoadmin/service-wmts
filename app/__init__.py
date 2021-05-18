@@ -13,15 +13,19 @@ from app.middleware import ReverseProxy
 
 logger = logging.getLogger(__name__)
 
-# Enable kombu pickle serializer that is used by Celery to serialize messages
+# TODO CLEAN_UP: Enable kombu pickle serializer that is used by Celery to
+# serialize messages
 registry.enable('pickle')
 
 # Standard Flask application initialization
 
 app = Flask(__name__)
 app.config.from_object('app.default_settings')
-# TODO check if the reverse proxy is needed or not
+
+# TODO CLEAN_UP: check if the reverse proxy is needed or not
 # app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
+
+# TODO CLEAN_UP: remove S3 second level caching if not needed
 celery = make_celery(app)
 
 

@@ -69,6 +69,8 @@ def set_cache_control(headers, restriction):
 
 def get_image_format(extension):
     image_format = extension
+    # TODO CLEAN_UP: if the pngjpeg hack is not needed anymore we should
+    # remove it
     if extension == 'pngjpeg':
         image_format = 'png'
     return image_format
