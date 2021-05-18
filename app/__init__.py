@@ -59,6 +59,7 @@ def handle_exception(error):
     return make_error_msg(error.code, error.description)
 
 
+# isort: off
 from app import routes  # pylint: disable=wrong-import-position
 
 
