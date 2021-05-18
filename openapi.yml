@@ -49,7 +49,7 @@ paths:
                   version: "v0.2.0-beta.1"
         500:
           $ref: "#/components/responses/internalServerError"
-  /backend_checker:
+  /wms_checker:
     get:
       summary: WMS backend checker
       description: Route to check if the WMS backend service is up.

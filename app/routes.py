@@ -49,8 +49,8 @@ def info_json():
     )
 
 
-@app.route('/backend_checker')
-def backend_checker():
+@app.route('/wms_checker')
+def wms_checker():
     # Mapserver only
     wms_ok_string = 'No query information to decode. ' + \
                     'QUERY_STRING is set, but empty.\n'
@@ -93,7 +93,7 @@ def options_wmts(
     '<int:srid>/<int:zoom>/<int:col>/<int:row>.<string:extension>',
     methods=['GET', 'OPTIONS']
 )
-def get_wmts(
+def get_tile(
     version, layer_id, style_name, time, srid, zoom, col, row, extension
 ):
     # pylint: disable=too-many-locals
@@ -117,12 +117,12 @@ def get_wmts(
     s3_object = handle_wmts_modes(mode, wmts_path)
 
     if s3_object:
-        logger.info('Preparing image response from S3...')
+        logger.debug('Preparing image response from S3...')
         s3_resp, content = s3_object
         status_code, headers = prepare_wmts_cached_response(s3_resp, content)
         set_cache_control(headers, restriction)
     else:
-        logger.info('Returning image from the WMS server')
+        logger.debug('Returning image from the WMS server')
 
         shift = gagrid.RESOLUTIONS[zoom] * gutter
         bbox = extend_bbox(bbox, shift)

@@ -24,7 +24,7 @@ class CheckerTests(unittest.TestCase):
         )
 
     def test_backend_checker(self):
-        resp = self.app.get('/backend_checker')
+        resp = self.app.get('/wms_checker')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data, b'OK')
 
@@ -32,6 +32,6 @@ class CheckerTests(unittest.TestCase):
     def test_backend_checker_down(self, mock_get_wms_backend_root):
         mock_get_wms_backend_root.side_effect = \
             requests.exceptions.ConnectionError
-        resp = self.app.get('/backend_checker')
+        resp = self.app.get('/wms_checker')
         mock_get_wms_backend_root.assert_called_once()
         self.assertEqual(resp.status_code, 502)
