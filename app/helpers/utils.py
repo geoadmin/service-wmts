@@ -63,7 +63,7 @@ def is_still_valid_tile(exp_header, current_time):
 def set_cache_control(headers, restriction):
     cache_ttl = restriction.get('cache_ttl')
     if cache_ttl:
-        headers['Cache-Control'] = 'public, max-age=%s' % cache_ttl
+        headers['Cache-Control'] = f'public, max-age={cache_ttl}'
     return headers
 
 

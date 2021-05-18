@@ -36,7 +36,7 @@ def add_cors_and_cache_header(response):
             cache_control = settings.NO_CACHE
         response.headers.add('Cache-Control', cache_control)
     response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, HEAD')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
     response.headers.add(
         'Access-Control-Allow-Headers',
         'Content-Type, Authorization, x-requested-with, Origin, Accept'

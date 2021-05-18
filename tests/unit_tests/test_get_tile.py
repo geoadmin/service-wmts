@@ -126,7 +126,7 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=1800')
         self.assertEqual(resp.headers['Access-Control-Allow-Origin'], '*')
         self.assertEqual(
-            resp.headers['Access-Control-Allow-Methods'], 'GET, HEAD'
+            resp.headers['Access-Control-Allow-Methods'], 'GET, HEAD, OPTIONS'
         )
         self.assertEqual(
             resp.headers['Access-Control-Allow-Headers'],
