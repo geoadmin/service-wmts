@@ -15,27 +15,49 @@ services:
       - FCGID_MAX_PROCESSES=200
       - FCGID_MAX_REQUESTS_PER_PROCESS=1000
       - APACHE_LOG_LEVEL=debug
+    ports:
+      - 8000:80
   db:
     image: kartoza/postgis:12.0
     environment:
       - POSTGRES_DB=bod_local
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    ports:
+      - 15432:5432
     volumes:
       - type: bind
         source: ${PWD}/scripts/sql/init_local_db.sql
         target: /docker-entrypoint-initdb.d/setup-db.sql
+  s3:
+    image: minio/minio
+    env_file: ./minio.env
+    command: server /data
+    volumes:
+      - type: bind
+        source: ${PWD}/.volumes/minio
+        target: /data
+    ports:
+      - 9090:9000
   rabbitmq:
     image: rabbitmq:3.6-alpine
     environment:
       RABBITMQ_PORT: 5672
+    network_mode: "host"
   celery-workers:
-    image: "swisstopo/service-wmts:celery-workers-ci"
+    image: "swisstopo/service-wmts:celery-workers-local"
     build: .
+    volumes:
+      - type: bind
+        source: "${PWD}/logs"
+        target: /logs
     env_file:
-      .env.ci
+      .env.local
     environment:
-      LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
+      BOD_DB_PORT: 5432
+      BOD_DB_HOST: db
+      LOGS_DIR: /logs
+      LOGGING_CFG: /service-wmts/config/logging-cfg-local.yml
     entrypoint:
       - /service-wmts/scripts/wait-for-it.sh
       - db:5432
@@ -49,24 +71,6 @@ services:
       - --autoscale=17,8
       - --loglevel=info
     depends_on:
+      - s3
       - rabbitmq
-      - db
-  app:
-    image: "swisstopo/service-wmts-ci"
-    build: .
-    entrypoint:
-      - /service-wmts/scripts/wait-for-it.sh
-      - db:5432
-      - --
-      - nose2
-      - -c tests/unittest.cfg
-      - --verbose
-      - -s
-      - tests/
-    env_file:
-      .env.ci
-    environment:
-      LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
-    depends_on:
-      - celery-workers
       - db

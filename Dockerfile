@@ -5,7 +5,11 @@ RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
 
 
 # HERE : install relevant packages
-RUN pip3 install pipenv \
+RUN apt-get update \
+    && apt-get install -y gcc python3-dev libpq-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install pipenv \
     && pipenv --version
 
 COPY Pipfile* /tmp/

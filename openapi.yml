@@ -1,16 +1,34 @@
+---
 openapi: "3.0.0"
 info:
   version: "1.0.0"
   title: Service WMTS
+  description: |
+    A RESTFul implementation of the [WMTS](https://www.ogc.org/standards/wmts) [OGC](https://www.ogc.org/) standard.
+    For detailed information, see [WMTS OGC](https://www.ogc.org/standards/wmts) standard
+
+    *NOTE: Only the RESTFul request encoding to `GetTile` is implemented, not the `GetLegend` and `GetFeatureInfo`.
+    No KVP and SOAP request encoding is supported.*
+
+servers:
+  - url: https://wmts.geo.admin.ch
+
+tags:
+  - name: Checker
+    description: Endpoint to check the service status
+  - name: Tiles
+    description: Get tiles endpoints
+
 paths:
-  /rest/checker:
+  /checker:
     get:
-      summary: Route to check if the service is up.
+      summary: Service checker
+      description: Route to check if the service is up.
       operationId: checker
       tags:
-        - checker
+        - Checker
       responses:
-        "200":
+        200:
           description: Returning OK.
           content:
             application/json:
@@ -29,17 +47,191 @@ paths:
                   success: true
                   message: "OK"
                   version: "v0.2.0-beta.1"
-        "500":
-          description: Unexpected error.
+        500:
+          $ref: "#/components/responses/internalServerError"
+  /wms_checker:
+    get:
+      summary: WMS backend checker
+      description: Route to check if the WMS backend service is up.
+      operationId: wms-checker
+      tags:
+        - Checker
+      responses:
+        200:
+          description: Returning OK.
+          content:
+            text/plain:
+                example: OK
+        500:
+          $ref: "#/components/responses/internalServerError"
+        502:
+          $ref: "#/components/responses/backendWmsConnectionFailure"
+        503:
+          $ref: "#/components/responses/backendWmsFailure"
+  /{version}/{layer_id}/{style_name}/{time}/{srid}/{zoom}/{col}/{row}.{extension}:
+    parameters:
+      - name: version
+        in: path
+        required: true
+        description: WMTS protocol version. Only version `1.0.0.` is supported.
+        schema:
+          type: string
+          enum:
+            - "1.0.0"
+      - name: layer_id
+        in: path
+        required: true
+        description: Layer ID, see the [WMTS GetCapabilities](http://wmts.geo.admin.ch/1.0.0/WMTSCapabilities.xml) document.
+        schema:
+          type: string
+        example: ch.bav.schienennetz
+      - name: style_name
+        in: path
+        required: true
+        description: Style name, only `default` is supported
+        schema:
+          type: string
+          enum:
+           - default
+      - name: time
+        in: path
+        required: true
+        description: |
+          Date of tile generation in (ISO-8601) or logical value like `current`. A list of available
+          values is provided in the [WMTS GetCapabilities](http://wmts.geo.admin.ch/1.0.0/WMTSCapabilities.xml)
+          document under the `<Dimension>` tag. We recommend to use the value under the `<Default>` tag.
+          Note that these values might change frequently - check for updates regularly.
+        schema:
+          oneOf:
+            - type: string
+              enum:
+               - current
+            - type: string
+              format: date-time
+            - type: string
+              format: date
+      - name: srid
+        in: path
+        required: true
+        description: EPSG code for the projection
+        schema:
+          type: string
+          enum:
+            - 2056
+            - 21781
+            - 4326
+            - 3857
+      - name: zoom
+        in: path
+        required: true
+        description: Zoom level, depends on the resolution.
+        schema:
+          type: integer
+      - name: col
+        in: path
+        required: true
+        description: Tile column
+        schema:
+          type: integer
+      - name: row
+        in: path
+        required: true
+        description: Tile row
+        schema:
+          type: integer
+      - name: extension
+        in: path
+        required: true
+        description: Format extension. Mostly `png`, except for some raster layer (pixelkarte and swissimage)
+        schema:
+          type: string
+          enum:
+            - png
+            - jpeg
+    options:
+      summary: Options for GET Tiles
+      description: Returns the HTTP options for GET Tiles
+      operationId: options-tiles
+      tags:
+        - Tiles
+      responses:
+        200:
+          description: Returns header options
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              example: "public, max-age=1800"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: "*"
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+              example: "GET,HEAD"
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+              example: "Content-Type, Authorization, x-requested-with, Origin, Accept"
+          content:
+            text/plain:
+              example: ''
+        500:
+          $ref: "#/components/responses/internalServerError"
+    get:
+      summary: Get Tile
+      description: Get a tile
+      operationId: gettile
+      tags:
+        - Tiles
+      parameters:
+        - name: mode
+          in: query
+          description: Operation mode
+          schema:
+            type: string
+            enum:
+              - default
+              - debug
+              - preview
+        - name: nodata
+          in: query
+          description: |
+            If `true` returns `OK` if the image was successfully fetched and created. Can be used for tile generation.
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: Tile image
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: Invalid request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-                example:
-                  success: false
-                  error:
-                    code: 500
-                    message: "An internal error occurred"
+              example:
+                error:
+                  code: 400
+                  message: "Unsupported zoom level 139 for srid 2056"
+                success: false
+            plain/html:
+              example: |
+                <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+                <title>400 Bad Request</title>
+                <h1>Bad Request</h1>
+                <p>Unsupported zoom level 139 for srid 2056</p>
+        500:
+          $ref: "#/components/responses/internalServerError"
+        502:
+          $ref: "#/components/responses/backendWmsConnectionFailure"
+        503:
+          $ref: "#/components/responses/backendWmsFailure"
 
 
 components:
@@ -59,3 +251,54 @@ components:
             message:
               type: string
               description: Description of the error.
+  responses:
+    internalServerError:
+      description: Unexpected error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+            example:
+              success: false
+              error:
+                code: 500
+                message: "An internal error occurred"
+        text/html:
+          example: |
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+            <title>500 Internal Server Error</title>
+            <h1>Internal Server Error</h1>
+    backendWmsConnectionFailure:
+      description: Cannot connect to backend WMS
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+            example:
+              success: false
+              error:
+                code: 502
+                message: "Cannot connect to backend WMS"
+        text/html:
+          example: |
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+            <title>502 Bad Gateway</title>
+            <h1>Bad Gateway</h1>
+            <p>Cannot connect to backend WMS</p>
+    backendWmsFailure:
+      description: Incomprehensible answer. WMS is probably not ready yet.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+            example:
+              success: false
+              error:
+                code: 503
+                message: "Incomprehensible answer. WMS is probably not ready yet."
+        text/html:
+          example: |
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+            <title>503 Service Unavailable</title>
+            <h1>Service Unavailable</h1>
+            <p>Incomprehensible answer. WMS is probably not ready yet.</p>
