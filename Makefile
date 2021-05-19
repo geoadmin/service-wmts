@@ -18,8 +18,7 @@ AUTHOR = $(USER)
 TIMESTAMPS = .timestamps
 VOLUMES_MINIO = .volumes/minio
 LOGS_DIR = $(PWD)/logs
-REQUIREMENTS_TIMESTAMP = $(TIMESTAMPS)/.requirements.timestamp
-DEV_REQUIREMENTS_TIMESTAMP = $(TIMESTAMPS)/.dev-requirements.timestamps
+REQUIREMENTS := $(TIMESTAMPS) ${VOLUMES_MINIO} $(LOGS_DIR) $(PIP_FILE) $(PIP_FILE_LOCK)
 
 # Docker variables
 DOCKER_REGISTRY = 974517877189.dkr.ecr.eu-central-1.amazonaws.com
@@ -85,23 +84,25 @@ help:
 # Build targets. Calling setup is all that is needed for the local files to be installed as needed.
 
 .PHONY: dev
-dev: $(DEV_REQUIREMENTS_TIMESTAMP)
+dev: $(REQUIREMENTS)
+	pipenv install --dev
 	pipenv shell
 
 
 .PHONY: setup
-setup: $(REQUIREMENTS_TIMESTAMP)
+setup: $(REQUIREMENTS)
+	pipenv install
 	pipenv shell
 
 .PHONY: ci
-ci: $(TIMESTAMPS) $(PIP_FILE) $(PIP_FILE_LOCK)
+ci: $(REQUIREMENTS)
 	# Create virtual env with all packages for development using the Pipfile.lock
 	pipenv sync --dev
 
 # linting target, calls upon yapf to make sure your code is easier to read and respects some conventions.
 
 .PHONY: format
-format: $(DEV_REQUIREMENTS_TIMESTAMP)
+format:
 	$(YAPF) -p -i --style .style.yapf $(PYTHON_FILES)
 	$(ISORT) $(PYTHON_FILES)
 
@@ -109,13 +110,14 @@ format: $(DEV_REQUIREMENTS_TIMESTAMP)
 .PHONY: ci-check-format
 ci-check-format: format
 	@if [[ -n `git status --porcelain` ]]; then \
-	 	>&2 echo "ERROR: Code was not formatted correctly"; \
+	 	>&2 echo "ERROR: the following files are not formatted correctly:"; \
+		>&2 git status --porcelain; \
 		exit 1; \
 	fi
 
 
 .PHONY: lint
-lint: $(DEV_REQUIREMENTS_TIMESTAMP)
+lint:
 	$(PYLINT) $(PYTHON_FILES)
 
 
@@ -126,19 +128,19 @@ format-lint: format lint
 # Test target
 
 .PHONY: test
-test: $(DEV_REQUIREMENTS_TIMESTAMP)
+test:
 	$(NOSE) -c tests/unittest.cfg --verbose -s tests/
 
 
 # Serve targets. Using these will run the application on your local machine. You can either serve with a wsgi front (like it would be within the container), or without.
 
 .PHONY: serve
-serve: clean_logs $(REQUIREMENTS_TIMESTAMP) $(LOGS_DIR)
+serve: clean_logs $(LOGS_DIR)
 	LOGS_DIR=$(LOGS_DIR) FLASK_APP=$(subst -,_,$(SERVICE_NAME)) FLASK_DEBUG=1 $(FLASK) run --host=0.0.0.0 --port=$(WMTS_PORT)
 
 
 .PHONY: gunicornserve
-gunicornserve: clean_logs $(REQUIREMENTS_TIMESTAMP) $(LOGS_DIR)
+gunicornserve: clean_logs $(LOGS_DIR)
 	LOGS_DIR=$(LOGS_DIR) $(PYTHON) wsgi.py
 
 
@@ -217,16 +219,3 @@ $(VOLUMES_MINIO):
 
 $(LOGS_DIR):
 	mkdir -p -m=777 $(LOGS_DIR)
-
-
-$(PIP_FILE_LOCK):
-	pipenv install
-
-
-$(REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(LOGS_DIR) $(PIP_FILE) $(PIP_FILE_LOCK)
-	@touch $(REQUIREMENTS_TIMESTAMP)
-
-
-$(DEV_REQUIREMENTS_TIMESTAMP): $(TIMESTAMPS) ${VOLUMES_MINIO} $(LOGS_DIR) $(PIP_FILE) $(PIP_FILE_LOCK)
-	pipenv install --dev
-	@touch $(DEV_REQUIREMENTS_TIMESTAMP)
