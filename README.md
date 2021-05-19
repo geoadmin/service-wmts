@@ -12,6 +12,8 @@
 - [How to run locally](#how-to-run-locally)
   - [dependencies](#dependencies)
   - [Setting up to work](#setting-up-to-work)
+  - [Running the server locally](#running-the-server-locally)
+  - [Docker helpers](#docker-helpers)
   - [Linting and formatting your work](#linting-and-formatting-your-work)
 - [Service configuration](#service-configuration)
   - [General configuration](#general-configuration)
@@ -82,6 +84,42 @@ docker-compose -f docker-compose-celery.yml up --build
 Each time that you changes code related to the async tasks, then the containers needs to be restarted respectively rebuilt.*
 
 That's it, you're ready to work.
+
+### Running the server locally
+
+To run locally enter
+
+```bash
+make serve
+```
+
+or the following to use gunicorn as web server:
+
+```bash
+make gunicornserve
+```
+
+or the following to run the service in a docker image locally:
+
+```bash
+make dockerrun
+```
+
+### Docker helpers
+
+To build a local docker image tagged as `service-wmts:local-${USER}-${GIT_HASH_SHORT}` you can
+use
+
+```bash
+make dockerbuild
+```
+
+To push the image on the ECR repository use the following two commands
+
+```bash
+make dockerlogin
+make dockerpush
+```
 
 ### Linting and formatting your work
 

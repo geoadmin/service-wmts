@@ -64,3 +64,7 @@ nose2-junit.xml
 
 # logs file
 logs/
+
+# AWS cli builds on Codebuild
+awscliv2.zip
+aws/
