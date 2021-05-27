@@ -4,8 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-nose2 = "*"
-requests-mock = "*"
 PyYAML = "~=5.4.1"
 gevent = "~=21.1.2"
 gunicorn = "~=20.1.0"
@@ -27,6 +25,7 @@ yapf = "*"
 pylint = "*"
 pylint-flask = "*"
 nose2 = "*"
+requests-mock = "*"
 pylint-sqlalchemy = "~=0.2.0"
 pylint-flask-sqlalchemy = "~=0.2.0"
 

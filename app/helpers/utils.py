@@ -3,6 +3,7 @@ import logging
 import re
 from datetime import datetime
 
+from gatilegrid import getTileGrid
 from pyproj import Proj
 from pyproj import transform
 
@@ -74,3 +75,25 @@ def get_image_format(extension):
     if extension == 'pngjpeg':
         image_format = 'png'
     return image_format
+
+
+def get_closest_zoom(resolution, epsg):
+    tilegrid = getTileGrid(int(epsg))()
+    return tilegrid.getClosestZoom(float(resolution))
+
+
+def get_default_tile_matrix_set(epsg):
+    tilematrix_set = {}
+
+    tilegrid_class = getTileGrid(int(epsg))
+    gagrid = tilegrid_class(useSwissExtent=epsg in ['2056', '21781'])
+    for zoom in range(0, len(gagrid.RESOLUTIONS)):
+        tilematrix_set[zoom] = [
+            gagrid.getResolution(zoom),
+            gagrid.numberOfXTilesAtZoom(zoom),
+            gagrid.numberOfYTilesAtZoom(zoom),
+            gagrid.getScale(zoom)
+        ]
+    tilematrix_set['MAXY'] = gagrid.MAXY if epsg == '4326' else gagrid.MINX
+    tilematrix_set['MINX'] = gagrid.MINX if epsg == '4326' else gagrid.MAXY
+    return tilematrix_set

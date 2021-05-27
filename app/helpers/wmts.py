@@ -19,6 +19,27 @@ def get_wmts_path(version, layer_id, stylename, time, srid, address, extension):
     )
 
 
+def validate_version(version):
+    if version != '1.0.0':
+        msg = 'Unsupported version: %s. Only "1.0.0" is supported.'
+        logger.error(msg, version)
+        abort(400, msg % (version))
+
+
+def validate_epsg(epsg):
+    try:
+        getTileGrid(epsg)()
+    except AssertionError as error:
+        logger.error('Unsupported epsg %s: %s', epsg, error)
+        abort(400, f'Unsupported epsg {epsg}')
+
+
+def validate_lang(lang):
+    if lang not in ['de', 'fr', 'it', 'rm', 'en']:
+        logger.error('Unsupported lang %s', lang)
+        abort(400, f'Unsupported lang {lang}')
+
+
 def prepare_wmts_cached_response(resp, content):
     headers = {}
     headers['Content-Type'] = resp.getheader('content-type')
@@ -36,15 +57,13 @@ def prepare_wmts_cached_response(resp, content):
 def validate_wmts_request(
     version, style_name, time, srid, zoom, col, row, extension
 ):
+    validate_version(version)
+
     if not (time.isdigit() or time in ('default', 'current')):
         msg = 'Invalid time format: %s. Must be "current", "default" ' \
               'or an integer'
         logger.error(msg, time)
         abort(400, msg % (time))
-    if version != '1.0.0':
-        msg = 'Unsupported version: %s. Only "1.0.0" is supported.'
-        logger.error(msg, version)
-        abort(400, msg % (version))
 
     if style_name != 'default':
         msg = 'Unsupported style name: %s. Only "default" is supported.'

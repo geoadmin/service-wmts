@@ -1,0 +1,57 @@
+        {# Main loop #}
+        {% for layer in layers %}
+        <Layer>
+            <ows:Title>{{ layer.short_description|d('-', true)|e|trim }}</ows:Title>
+            <ows:Abstract>{{ layer.abstract|d('-', true)|e|trim }}</ows:Abstract>
+            <ows:WGS84BoundingBox>
+                {# Switzerland BBOX #}
+                <ows:LowerCorner>5.140242 45.398181</ows:LowerCorner>
+                <ows:UpperCorner>11.47757 48.230651</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+            <ows:Identifier>{{ layer.id|e|trim }}</ows:Identifier>
+            <ows:Metadata xlink:href="https://www.geocat.ch/geonetwork/srv/ger/md.viewer#/full_view/{{ layer.id_geocat }}"/>
+            <Style>
+                <ows:Title>{{ layer.short_description|d('-', true)|e|trim }}</ows:Title>
+                <ows:Identifier>{{ layer.id|d('-', true)|e|trim }}</ows:Identifier>
+                {% if layer.has_legend %}
+                <LegendURL format="image/png" xlink:href="{{ legend_base_url }}/{{ layer.id|e|trim }}_{{ language }}.png"/>
+                {% endif %}
+            </Style>
+            {# TODO CLEAN_UP remove this special case #}
+            {% if layer.id == 'ch.swisstopo.zeitreihen' and epsg == '21781' %}
+            <Format>image/png</Format>
+            {% endif %}
+            {% for format in layer.formats|split(",")|unique %}
+            <Format>image/{{ format }}</Format>
+            {% endfor %}
+            {# All dimensions #}
+            <Dimension>
+                <ows:Identifier>Time</ows:Identifier>
+                <Default>{{ layer.timestamps|split(",")|first }}</Default>
+                {# TODO CLEAN_UP remove this special case #}
+                {% if layer.id == 'ch.kantone.cadastralwebmap-farbe' %}
+                <Current>true</Current>
+                {% endif %}
+                {% for timestamp in layer.timestamps|split(",") %}
+                <Value>{{ timestamp }}</Value>
+                {% endfor %}
+            </Dimension>
+            <TileMatrixSetLink>
+                <TileMatrixSet>{{ epsg }}_{{ layer.resolution_max|get_closest_zoom(epsg) }}</TileMatrixSet>
+            </TileMatrixSetLink>
+            {# Zeitreihen has two formats available 'png' (desktop GIS) and (pngjpeg) web gis #}
+            {% if layer.id == 'ch.swisstopo.zeitreihen' and epsg == '21781' %}
+            <ResourceURL format="image/png" resourceType="tile" template="{{ url_base }}1.0.0/{{ layer.id|e|trim }}/default/{Time}/{{ epsg }}/{TileMatrix}/{TileRow}/{TileCol}.png"/>
+            {% endif %}
+            {# ## ATTENTION: s3 tiles have a row/col order, mapproxy ones the standard col/row #}
+            {% for format in layer.formats|split(",")|unique %}
+            {% if epsg == 21781 %}
+            <ResourceURL format="image/{{ format }}" resourceType="tile" template="{{ url_base }}1.0.0/{{ layer.id|e|trim }}/default/{Time}/{{ epsg }}/{TileMatrix}/{TileRow}/{TileCol}.{{ format }}"/>
+            {% else %}
+            {# Maproxy order #}
+            <ResourceURL format="image/{{ format }}" resourceType="tile" template="{{ url_base }}1.0.0/{{ layer.id|e|trim }}/default/{Time}/{{ epsg }}/{TileMatrix}/{TileCol}/{TileRow}.{{ format }}"/>
+            {% endif %}
+            {% endfor %}
+        </Layer>
+        {% endfor %}
+        {#  main loop #}

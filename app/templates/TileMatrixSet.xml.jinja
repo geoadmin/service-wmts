@@ -1,0 +1,22 @@
+{% for zoom in zoom_levels %}
+        <TileMatrixSet>
+            <ows:Identifier>{{ epsg }}_{{ zoom }}</ows:Identifier>
+            <ows:SupportedCRS>urn:ogc:def:crs:EPSG:{{ epsg }}</ows:SupportedCRS>
+            {% for z in range(0, zoom + 1) %}
+            {% set scale = default_tile_matrix_set[z][3] %}
+            {% set matrix_width = default_tile_matrix_set[z][1] %}
+            {% set matrix_height = default_tile_matrix_set[z][2] %}
+            {% set top_x = default_tile_matrix_set['MINX'] %}
+            {% set top_y = default_tile_matrix_set['MAXY'] %}
+            <TileMatrix>
+                <ows:Identifier>{{ z }}</ows:Identifier>
+                <ScaleDenominator>{{ scale }}</ScaleDenominator>
+                <TopLeftCorner>{{ top_y }} {{ top_x }}</TopLeftCorner>
+                <TileWidth>256</TileWidth>
+                <TileHeight>256</TileHeight>
+                <MatrixWidth>{{ matrix_width }}</MatrixWidth>
+                <MatrixHeight>{{ matrix_height }}</MatrixHeight>
+            </TileMatrix>
+            {% endfor %}
+        </TileMatrixSet>
+{% endfor %}

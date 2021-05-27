@@ -5,9 +5,11 @@ from werkzeug.exceptions import HTTPException
 
 from flask import Flask
 from flask import request
+from flask_sqlalchemy import SQLAlchemy
 
 from app import settings
 from app.helpers.celery import make_celery
+from app.helpers.utils import get_closest_zoom
 from app.helpers.utils import make_error_msg
 from app.middleware import ReverseProxy
 
@@ -20,13 +22,32 @@ registry.enable('pickle')
 # Standard Flask application initialization
 
 app = Flask(__name__)
-app.config.from_object('app.default_settings')
+app.config.from_object('app.settings')
+
+# Setup the DB
+db = SQLAlchemy(app)
 
 # TODO CLEAN_UP: check if the reverse proxy is needed or not
 # app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed
 celery = make_celery(app)
+
+# JINJA Configuration
+
+
+# Jinja doesn't support by default the string split() method therefore add it
+# here
+@app.template_filter('split')
+def split_filter(string, separator):
+    return string.split(separator)
+
+
+# register the get_closest_zoom as jinja filter which is used in the
+# Get capabilities
+app.jinja_env.filters['get_closest_zoom'] = get_closest_zoom
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
 
 
 # Add CORS Headers to all request

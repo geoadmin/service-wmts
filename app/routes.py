@@ -24,6 +24,7 @@ from app.helpers.wmts import prepare_wmts_cached_response
 from app.helpers.wmts import validate_restriction
 from app.helpers.wmts import validate_wmts_request
 from app.version import APP_VERSION
+from app.views import GetCapabilities
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +41,10 @@ def check():
 @app.route('/info.json')
 def info_json():
     return make_response(
-        jsonify(
-            {
-                'python_version': platform.python_version(),
-                'app_version': APP_VERSION
-            }
-        )
+        jsonify({
+            'python_version': platform.python_version(),
+            'app_version': APP_VERSION
+        })
     )
 
 
@@ -139,3 +138,27 @@ def get_tile(
     if nodata == 'true':
         return Response('OK', status=200, mimetype='text/plain')
     return Response(content, headers=headers, status=status_code)
+
+
+view_get_capabilities = GetCapabilities.as_view('get_capabilities')
+app.add_url_rule(
+    '/EPSG/<int:epsg>/<string:lang>/<string:version>/WMTSCapabilities.xml',
+    view_func=view_get_capabilities
+)
+app.add_url_rule(
+    '/EPSG/<int:epsg>/<string:version>/WMTSCapabilities.xml',
+    defaults={'lang': 'de'},
+    view_func=view_get_capabilities
+)
+app.add_url_rule(
+    '/<string:version>/WMTSCapabilities.EPSG.<int:epsg>.xml',
+    defaults={'lang': 'de'},
+    view_func=view_get_capabilities
+)
+app.add_url_rule(
+    '/<string:version>/WMTSCapabilities.xml',
+    defaults={
+        'epsg': None, 'lang': None
+    },
+    view_func=view_get_capabilities
+)
