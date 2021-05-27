@@ -80,17 +80,6 @@ def wms_checker():
 @app.route(
     '/<string:version>/<string:layer_id>/<string:style_name>/<string:time>/'
     '<int:srid>/<int:zoom>/<int:col>/<int:row>.<string:extension>',
-    methods=['OPTIONS']
-)
-def options_wmts(
-    version, layer_id, style_name, time, srid, zoom, col, row, extension
-):
-    return Response('', status=200, mimetype='text/plain')
-
-
-@app.route(
-    '/<string:version>/<string:layer_id>/<string:style_name>/<string:time>/'
-    '<int:srid>/<int:zoom>/<int:col>/<int:row>.<string:extension>',
     methods=['GET', 'OPTIONS']
 )
 def get_tile(
