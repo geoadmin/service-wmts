@@ -68,3 +68,8 @@ logs/
 # AWS cli builds on Codebuild
 awscliv2.zip
 aws/
+
+# .env files
+.env.*
+!.env.ci
+!.env.local
