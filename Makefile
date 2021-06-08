@@ -159,6 +159,7 @@ dockerbuild: $(VOLUMES_MINIO)
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
 		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
 		--build-arg VERSION="$(GIT_TAG)" \
+		--build-arg WMTS_PORT="$(WMTS_PORT)" \
 		--build-arg AUTHOR="$(AUTHOR)" -t $(DOCKER_IMG_LOCAL_TAG) --target production .
 
 
