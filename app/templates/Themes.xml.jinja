@@ -1,14 +1,14 @@
     <Themes>
         {# Main loop for the themes #}
-        {# The DB-list is ordered by upper_theme_id #}
-        {% set previous = namespace(upper_theme_id='unknown') %}
+        {# The DB-list is ordered by inspire_upper_theme_id #}
+        {% set previous = namespace(inspire_upper_theme_id='unknown') %}
         {% for theme in themes %}
-        {% if previous.upper_theme_id != theme.upper_theme_id %}
+        {% if previous.inspire_upper_theme_id != theme.inspire_upper_theme_id %}
         {# First level theme #}
         <Theme>
             <ows:Title>{{ theme.inspire_upper_theme_name|d('-', true)|e|trim }}</ows:Title>
             <ows:Abstract>{{ theme.inspire_upper_theme_abstract|d('-', true)|e|trim }}</ows:Abstract>
-            <ows:Identifier>{{ theme.upper_theme_id|d('-', true)|e|trim }}</ows:Identifier>
+            <ows:Identifier>{{ theme.inspire_upper_theme_id|d('-', true)|e|trim }}</ows:Identifier>
         {% endif %}
             {# Second levels Themes #}
             <Theme>
@@ -16,15 +16,15 @@
                 <ows:Abstract>{{ theme.inspire_abstract|d('-', true)|e|trim }}</ows:Abstract>
                 <ows:Identifier>{{ theme.id|d('-', true)|e|trim }}</ows:Identifier>
                 {# Refs #}
-                {% set layers = theme.fk_dataset_id|split(',')  %}
+                {% set layers = theme.fk_dataset_ids  %}
                 {% for layer in layers %}
                 <LayerRef>{{ layer }}</LayerRef>
                 {% endfor %}
             </Theme>
         {# End of first level theme #}
-        {% if loop.last or theme.upper_theme_id != themes[loop.index0 + 1].upper_theme_id %}
+        {% if loop.last or theme.inspire_upper_theme_id != themes[loop.index0 + 1].inspire_upper_theme_id %}
         </Theme>
         {% endif %}
-        {% set previous.upper_theme_id = theme.upper_theme_id %}
+        {% set previous.inspire_upper_theme_id = theme.inspire_upper_theme_id %}
         {% endfor %}
     </Themes>
