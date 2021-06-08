@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class GetCapabilities(View):
-    methods = ['GET', 'HEAD', 'OPTIONS']
+    methods = ['GET']
 
     def dispatch_request(self, epsg, lang, version):  # pylint: disable=arguments-differ
         epsg, lang, version = self.get_and_validate_args(epsg, lang, version)
