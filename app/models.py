@@ -36,7 +36,6 @@ class QueryGetCap(BaseQuery):  # pylint: disable=too-many-ancestors
 
 
 class GetCap(object):
-    __dbname__ = 'bod'
 
     id = db.Column('fk_dataset_id', db.Unicode, primary_key=True)
     formats = db.Column('format', db.Unicode)
@@ -95,8 +94,6 @@ class GetCapRm(db.Model, GetCap):
 
 
 class GetCapThemes(object):
-    # pylint: disable=invalid-name
-    __dbname__ = 'bod'
     id = db.Column('inspire_id', db.Unicode, primary_key=True)
     inspire_name = db.Column('inspire_name', db.Unicode)
     inspire_abstract = db.Column('inspire_abstract', db.Unicode)
