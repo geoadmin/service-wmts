@@ -70,7 +70,7 @@ class GetCapabilities(View):
         logger.debug('get layers zoom done in %fs', time.time() - start_int)
         start_int = time.time()
         themes = models['GetCapThemes'].query.order_by(
-            GetCapThemes.upper_theme_id
+            GetCapThemes.inspire_upper_theme_id
         ).all()
         logger.debug('get cap themes in %fs', time.time() - start_int)
         start_int = time.time()

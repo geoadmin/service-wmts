@@ -21,18 +21,18 @@
             {% if layer.id == 'ch.swisstopo.zeitreihen' and epsg == '21781' %}
             <Format>image/png</Format>
             {% endif %}
-            {% for format in layer.formats|split(",")|unique %}
+            {% for format in layer.formats %}
             <Format>image/{{ format }}</Format>
             {% endfor %}
             {# All dimensions #}
             <Dimension>
                 <ows:Identifier>Time</ows:Identifier>
-                <Default>{{ layer.timestamps|split(",")|first }}</Default>
+                <Default>{{ layer.timestamps|first }}</Default>
                 {# TODO CLEAN_UP remove this special case #}
                 {% if layer.id == 'ch.kantone.cadastralwebmap-farbe' %}
                 <Current>true</Current>
                 {% endif %}
-                {% for timestamp in layer.timestamps|split(",") %}
+                {% for timestamp in layer.timestamps %}
                 <Value>{{ timestamp }}</Value>
                 {% endfor %}
             </Dimension>
@@ -44,7 +44,7 @@
             <ResourceURL format="image/png" resourceType="tile" template="{{ url_base }}1.0.0/{{ layer.id|e|trim }}/default/{Time}/{{ epsg }}/{TileMatrix}/{TileRow}/{TileCol}.png"/>
             {% endif %}
             {# ## ATTENTION: s3 tiles have a row/col order, mapproxy ones the standard col/row #}
-            {% for format in layer.formats|split(",")|unique %}
+            {% for format in layer.formats %}
             {% if epsg == 21781 %}
             <ResourceURL format="image/{{ format }}" resourceType="tile" template="{{ url_base }}1.0.0/{{ layer.id|e|trim }}/default/{Time}/{{ epsg }}/{TileMatrix}/{TileRow}/{TileCol}.{{ format }}"/>
             {% else %}
