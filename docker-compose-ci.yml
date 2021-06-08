@@ -53,7 +53,9 @@ services:
       - db
   app:
     image: "swisstopo/service-wmts-ci"
-    build: .
+    build:
+        context: .
+        target: unittest
     entrypoint:
       - /service-wmts/scripts/wait-for-it.sh
       - db:5432

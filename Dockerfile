@@ -1,5 +1,5 @@
 # Buster slim python 3.7 base image.
-FROM python:3.7-slim-buster
+FROM python:3.7-slim-buster as base
 ENV WMTS_PORT 9000
 RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
 
@@ -32,6 +32,28 @@ LABEL author=$AUTHOR
 
 # Overwrite the version.py from source with the actual version
 RUN echo "APP_VERSION = '$VERSION'" > /service-wmts/app/version.py
+
+# ##################################################
+# Testing target
+FROM base as unittest
+
+LABEL target=unittest
+
+RUN cd /tmp && \
+    pipenv install --system --deploy --ignore-pipfile --dev
+
+USER geoadmin
+
+EXPOSE $WMTS_PORT
+
+# Use a real WSGI server
+ENTRYPOINT ["python3", "wsgi.py"]
+
+# ##################################################
+# Production target
+FROM base as production
+
+LABEL target=production
 
 USER geoadmin
 
