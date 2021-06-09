@@ -94,6 +94,7 @@ def get_default_tile_matrix_set(epsg):
             gagrid.numberOfYTilesAtZoom(zoom),
             gagrid.getScale(zoom)
         ]
+    # TODO CLEAN_UP check if this legacy mistake is still needed
     tilematrix_set['MAXY'] = gagrid.MAXY if epsg == '4326' else gagrid.MINX
     tilematrix_set['MINX'] = gagrid.MINX if epsg == '4326' else gagrid.MAXY
     return tilematrix_set

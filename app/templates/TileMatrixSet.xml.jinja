@@ -1,4 +1,5 @@
 {% for zoom in zoom_levels %}
+{# TODO CLEAN_UP check if we can (is allowed and supported by clients) pack all matrices set for all projections in one single doc #}
         <TileMatrixSet>
             <ows:Identifier>{{ epsg }}_{{ zoom }}</ows:Identifier>
             <ows:SupportedCRS>urn:ogc:def:crs:EPSG:{{ epsg }}</ows:SupportedCRS>
