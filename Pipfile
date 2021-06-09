@@ -4,12 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-nose2 = "*"
-requests-mock = "*"
-PyYAML = "~=5.3.1"
+PyYAML = "~=5.4.1"
 gevent = "~=21.1.2"
 gunicorn = "~=20.1.0"
-Flask = "~=1.1.1"
+Flask = "~=2.0.0"
 logging-utilities = "~=1.2.0"
 celery = "~=5.0.5"
 boto3 = "~=1.17.60"
@@ -19,12 +17,17 @@ gatilegrid = "~=0.2.0"
 Pillow = "~=8.2.0"
 python-dotenv = "~=0.17.0"
 psycopg2 = "~=2.8.6"
+sqlalchemy = "~=1.4.15"
+flask-sqlalchemy = "~=2.5.1"
 
 [dev-packages]
 yapf = "*"
 pylint = "*"
 pylint-flask = "*"
 nose2 = "*"
+requests-mock = "*"
+pylint-sqlalchemy = "~=0.2.0"
+pylint-flask-sqlalchemy = "~=0.2.0"
 
 [requires]
 python_version = "3.7"

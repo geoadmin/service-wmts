@@ -70,7 +70,8 @@ help:
 	@echo -e " \033[1mLOCAL SERVER TARGETS\033[0m "
 	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable WMTS_PORT (default: 5000)"
 	@echo "- gunicornserve      Run the project using the gunicorn WSGI server. Port can be set by Env variable DEBUG_WMTS_PORT (default: 5000)"
-	@echo "- serve-spec         Serve the spec using Redoc on localhost:8080"
+	@echo "- serve-spec-redoc   Serve the spec using Redoc on localhost:8080"
+	@echo "- serve-spec-swagger Serve the spec using Swagger on localhost:8080/swagger"
 	@echo -e " \033[1mDocker TARGETS\033[0m "
 	@echo "- dockerlogin        Login to the AWS ECR registery for pulling/pushing docker images"
 	@echo "- dockerbuild        Build the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG)) using the gunicorn WSGI server inside a container"
@@ -158,7 +159,8 @@ dockerbuild: $(VOLUMES_MINIO)
 		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
 		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
 		--build-arg VERSION="$(GIT_TAG)" \
-		--build-arg AUTHOR="$(AUTHOR)" -t $(DOCKER_IMG_LOCAL_TAG) .
+		--build-arg WMTS_PORT="$(WMTS_PORT)" \
+		--build-arg AUTHOR="$(AUTHOR)" -t $(DOCKER_IMG_LOCAL_TAG) --target production .
 
 
 .PHONY: dockerpush
@@ -183,11 +185,20 @@ lint-spec:
 	docker run --volume "$(PWD)":/data jamescooke/openapi-validator -e openapi.yml
 
 
-.PHONY: serve-spec
-serve-spec:
+.PHONY: serve-spec-recod
+serve-spec-redoc:
 	docker run -it --rm -p 8080:80 \
 		-v "$(PWD)/openapi.yml":/usr/share/nginx/html/openapi.yml \
 		-e SPEC_URL=openapi.yml redocly/redoc
+
+
+.PHONY: serve-spec-swagger
+serve-spec-swagger:
+	echo "SWAGGER UI on http://localhost:8080/swagger"
+	docker run -p 8080:8080 \
+		-e BASE_URL=/swagger -e SWAGGER_JSON=/openapi.yaml \
+		-v ${PWD}/openapi.yml:/openapi.yaml \
+		swaggerapi/swagger-ui
 
 # Clean targets
 

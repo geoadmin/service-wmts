@@ -31,7 +31,7 @@ limit-inference-results=100
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_flask
+load-plugins=pylint_flask_sqlalchemy,pylint_sqlalchemy,pylint_flask
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -138,7 +138,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=
+generated-members=(GetCap|ServiceMetadata)\..*\.like,app.jinja_env.filters
 
 # Tells whether missing members accessed in mixin class should be ignored. A
 # mixin class is detected if its name ends with "mixin" (case insensitive).
@@ -288,6 +288,7 @@ good-names=i,
            fd,
            Run,
            dictionary,
+           id,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,
