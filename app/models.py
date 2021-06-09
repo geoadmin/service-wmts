@@ -5,6 +5,20 @@ from flask_sqlalchemy import BaseQuery
 from app import db
 
 
+class TileSetConcatenated(db.Model):
+    __tablename__ = 'view_tileset_concatenated'
+    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+
+    id = db.Column('fk_dataset_id', db.Unicode, primary_key=True)
+    timestamps = db.Column('timestamps', db.ARRAY(db.Unicode))
+    formats = db.Column('formats', db.ARRAY(db.Unicode))
+    resolution_min = db.Column('resolution_min', db.Float)
+    resolution_max = db.Column('resolution_max', db.Float)
+    s3_resolution_max = db.Column('s3_resolution_max', db.Float)
+    wms_gutter = db.Column('wms_gutter', db.Integer)
+    cache_ttl = db.Column('cache_ttl', db.Integer)
+
+
 class QueryGetCap(BaseQuery):  # pylint: disable=too-many-ancestors
 
     def filter_by_staging(self, staging):

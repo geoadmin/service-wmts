@@ -50,20 +50,23 @@ def get_wmts_config_from_db():
         # select records from DB
         cursor.execute(
             """
-            SELECT
-            tileset.fk_dataset_id
-            , array_agg(DISTINCT timestamp order by timestamp desc)
-            , max(resolution_min::float)
-            , min(resolution_max::float)
-            , coalesce(min(s3_resolution_max::float)
-            , min(resolution_max::float))
-            , array_agg(DISTINCT format)
-            , coalesce(cache_ttl,1800)
-            , max(wms_gutter)
-            FROM tileset tileset LEFT JOIN tileset_timestamps time ON
-            tileset.fk_dataset_id = time.fk_dataset_id
-            group by tileset.fk_dataset_id,
-            format, cache_ttl  ORDER BY tileset.fk_dataset_id
+            SELECT tileset.fk_dataset_id
+                , array_agg(DISTINCT timestamp ORDER BY timestamp desc)
+                , MAX(resolution_min::float)
+                , MIN(resolution_max::float)
+                , COALESCE(
+                    MIN(s3_resolution_max::float), MIN(resolution_max::float)
+                )
+                , array_agg(DISTINCT format)
+                , COALESCE(cache_ttl, 1800)
+                , MAX(wms_gutter)
+            FROM tileset tileset
+                LEFT JOIN tileset_timestamps time ON
+                    tileset.fk_dataset_id = time.fk_dataset_id
+            GROUP BY tileset.fk_dataset_id
+                , format
+                , cache_ttl
+            ORDER BY tileset.fk_dataset_id
             """
         )
     except psy.Error as error:
