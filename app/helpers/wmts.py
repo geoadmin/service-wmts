@@ -110,45 +110,45 @@ def validate_wmts_request(
 
 
 def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
-    # restriction checks based on bod values / getcap values go here
-    restriction = get_wmts_config_by_layer(layer_id)
+    # wmts_config checks based on bod values / getcap values go here
+    wmts_config = get_wmts_config_by_layer(layer_id)
     write_s3 = None
-    if restriction:
+    if wmts_config:
         # timestamp
-        if time not in restriction['timestamp']:
+        if time not in wmts_config.timestamps:
             msg = 'Unsupported timestamp %s, ' \
                   'supported timestamps are %s'
-            logger.error(msg, time, ", ".join(restriction["timestamp"]))
-            abort(400, msg % (time, ", ".join(restriction["timestamp"])))
+            logger.error(msg, time, ", ".join(wmts_config.timestamps))
+            abort(400, msg % (time, ", ".join(wmts_config.timestamps)))
 
         # format/extension
-        if extension not in restriction['format']:
+        if extension not in wmts_config.formats:
             msg = 'Unsupported image format %s,' \
                   'supported format is %s'
-            logger.error(msg, extension, restriction["format"])
-            abort(400, msg % (extension, restriction["format"]))
+            logger.error(msg, extension, wmts_config.formats)
+            abort(400, msg % (extension, wmts_config.formats))
 
         resolution = gagrid.getResolution(zoom)
-        max_resolution = restriction['max_resolution']
-        s3_max_resolution = restriction['s3_max_resolution']
+        resolution_max = wmts_config.resolution_max
+        s3_resolution_max = wmts_config.s3_resolution_max
         # convert according to base unit
         if srid == 4326:
             resolution = resolution * gagrid.metersPerUnit
         # max resolution
-        if resolution < max_resolution:
+        if resolution < resolution_max:
             logger.error(
                 'Unsupported zoom level %s (resolution: %s), maxzoom is: %s',
                 zoom,
                 resolution,
-                gagrid.getClosestZoom(max_resolution)
+                gagrid.getClosestZoom(resolution_max)
             )
             abort(
                 400,
                 f'Unsupported zoom level {zoom}, '
-                f'maxzoom is: {gagrid.getClosestZoom(max_resolution)}'
+                f'maxzoom is: {gagrid.getClosestZoom(resolution_max)}'
             )
         # put tiles to s3
-        write_s3 = resolution >= s3_max_resolution
+        write_s3 = resolution >= s3_resolution_max
     else:
         msg = 'Unsupported Layer %s'
         logger.error(msg, layer_id)
@@ -156,14 +156,14 @@ def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
 
     try:
         gutter = request.args.get('gutter', 0)
-        gutter = int(gutter) if gutter else restriction.get('wms_gutter', 0)
+        gutter = int(gutter) if gutter else wmts_config.wms_gutter
     except ValueError as error:
         logger.error(
             'Invalid gutter value %s: %s. Must be an integer', gutter, error
         )
         abort(400, 'Gutter value must be an integer')
 
-    return restriction, gutter, write_s3
+    return wmts_config, gutter, write_s3
 
 
 def handle_wmts_modes(mode, wmts_path):
