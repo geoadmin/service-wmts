@@ -27,17 +27,19 @@ def validate_version(version):
 
 
 def validate_epsg(epsg):
+    supported_epsg = [21781, 2056, 3857, 4326]
     try:
         getTileGrid(epsg)()
     except AssertionError as error:
         logger.error('Unsupported epsg %s: %s', epsg, error)
-        abort(400, f'Unsupported epsg {epsg}')
+        abort(400, f'Unsupported epsg {epsg}, must be on of {supported_epsg}')
 
 
 def validate_lang(lang):
-    if lang not in ['de', 'fr', 'it', 'rm', 'en']:
+    languages = ['de', 'fr', 'it', 'rm', 'en']
+    if lang not in languages:
         logger.error('Unsupported lang %s', lang)
-        abort(400, f'Unsupported lang {lang}')
+        abort(400, f'Unsupported lang {lang}, must be on of {languages}')
 
 
 def prepare_wmts_cached_response(resp, content):
