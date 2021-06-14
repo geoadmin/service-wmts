@@ -54,15 +54,11 @@ class GetCap(object):
     id = db.Column('fk_dataset_id', db.Unicode, primary_key=True)
     id_geocat = db.Column('id_geocat', db.Unicode)
     staging = db.Column('staging', db.Unicode)
-    description = db.Column('description', db.Unicode)
     short_description = db.Column('short_description', db.Unicode)
     abstract = db.Column('abstract', db.Unicode)
     formats = db.Column('formats', db.ARRAY(db.Unicode))
     timestamps = db.Column('timestamps', db.ARRAY(db.Unicode))
-    resolution_min = db.Column('resolution_min', db.Float)
     resolution_max = db.Column('resolution_max', db.Float)
-    s3_resolution_max = db.Column('s3_resolution_max', db.Float)
-    cache_ttl = db.Column('cache_ttl', db.Float)
     topics = db.Column('topics', db.ARRAY(db.Unicode))
     has_legend = db.Column('has_legend', db.Boolean)
 
@@ -142,20 +138,6 @@ class ServiceMetadata(object):
     keywords = db.Column('keywords', db.Unicode)
     fee = db.Column('fee', db.Unicode)
     access_constraint = db.Column('access_constraint', db.Unicode)
-    fk_contact_id = db.Column('fk_contact_id', db.Integer)
-    address_type = db.Column('address_type', db.Unicode)
-    address = db.Column('address', db.Unicode)
-    postcode = db.Column('postcode', db.Integer)
-    city = db.Column('city', db.Unicode)
-    country = db.Column('country', db.Unicode)
-    contact_email_address = db.Column('contact_email_address', db.Unicode)
-    contact_person = db.Column('contact_person', db.Unicode)
-    contact_phone = db.Column('contact_phone', db.Unicode)
-    state_or_province = db.Column('state_or_province', db.Unicode)
-    fk_contact_organisation_id = db.Column(
-        'fk_contact_organisation_id', db.Integer
-    )
-    abbreviation = db.Column('abbreviation', db.Unicode)
     name = db.Column('name', db.Unicode)
 
 
