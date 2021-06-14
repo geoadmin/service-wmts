@@ -50,23 +50,7 @@ def get_wmts_config_from_db():
         # select records from DB
         cursor.execute(
             """
-            SELECT tileset.fk_dataset_id
-                , array_agg(DISTINCT timestamp ORDER BY timestamp desc)
-                , MAX(resolution_min::float)
-                , MIN(resolution_max::float)
-                , COALESCE(
-                    MIN(s3_resolution_max::float), MIN(resolution_max::float)
-                )
-                , array_agg(DISTINCT format)
-                , COALESCE(cache_ttl, 1800)
-                , MAX(wms_gutter)
-            FROM tileset tileset
-                LEFT JOIN tileset_timestamps time ON
-                    tileset.fk_dataset_id = time.fk_dataset_id
-            GROUP BY tileset.fk_dataset_id
-                , format
-                , cache_ttl
-            ORDER BY tileset.fk_dataset_id
+            SELECT * FROM "service-wmts".view_tileset_concatenated
             """
         )
     except psy.Error as error:
@@ -81,11 +65,11 @@ def get_wmts_config_from_db():
     for i, record in enumerate(cursor):
         logger.debug('WMS config record %d: %s', i, record)
         _restrictions[record[0]] = {
-            'timestamp': record[1],
-            'min_resolution': record[2],
-            'max_resolution': record[3],
-            's3_max_resolution': record[4],
-            'format': record[5],
+            'timestamps': record[1],
+            'formats': record[2],
+            'resolution_min': record[3],
+            'resolution_max': record[4],
+            's3_resolution_max': record[5],
             'cache_ttl': record[6],
             'wms_gutter': record[7]
         }
