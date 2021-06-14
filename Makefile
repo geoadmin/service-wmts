@@ -35,6 +35,7 @@ PIP_FILE = Pipfile
 PIP_FILE_LOCK = Pipfile.lock
 
 # default configuration
+ENV_FILE ?= .env.local
 WMTS_PORT ?= 9000
 
 # Commands
@@ -172,7 +173,7 @@ dockerpush: dockerbuild
 dockerrun: clean_logs dockerbuild $(LOGS_DIR)
 	LOGS_DIR=/logs docker run \
 		-it --rm --net=host \
-		--env-file=${PWD}/.env.local \
+		--env-file=${PWD}/${ENV_FILE} \
 		--env LOGS_DIR=/logs \
 		--mount type=bind,source="$$(pwd)"/logs,target=/logs \
 		$(DOCKER_IMG_LOCAL_TAG)
