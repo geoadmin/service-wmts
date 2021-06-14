@@ -115,40 +115,40 @@ def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
     write_s3 = None
     if restriction:
         # timestamp
-        if time not in restriction['timestamp']:
+        if time not in restriction['timestamps']:
             msg = 'Unsupported timestamp %s, ' \
                   'supported timestamps are %s'
-            logger.error(msg, time, ", ".join(restriction["timestamp"]))
-            abort(400, msg % (time, ", ".join(restriction["timestamp"])))
+            logger.error(msg, time, ", ".join(restriction["timestamps"]))
+            abort(400, msg % (time, ", ".join(restriction["timestamps"])))
 
         # format/extension
-        if extension not in restriction['format']:
+        if extension not in restriction['formats']:
             msg = 'Unsupported image format %s,' \
                   'supported format is %s'
-            logger.error(msg, extension, restriction["format"])
-            abort(400, msg % (extension, restriction["format"]))
+            logger.error(msg, extension, restriction["formats"])
+            abort(400, msg % (extension, restriction["formats"]))
 
         resolution = gagrid.getResolution(zoom)
-        max_resolution = restriction['max_resolution']
-        s3_max_resolution = restriction['s3_max_resolution']
+        resolution_max = restriction['resolution_max']
+        s3_resolution_max = restriction['s3_resolution_max']
         # convert according to base unit
         if srid == 4326:
             resolution = resolution * gagrid.metersPerUnit
         # max resolution
-        if resolution < max_resolution:
+        if resolution < resolution_max:
             logger.error(
                 'Unsupported zoom level %s (resolution: %s), maxzoom is: %s',
                 zoom,
                 resolution,
-                gagrid.getClosestZoom(max_resolution)
+                gagrid.getClosestZoom(resolution_max)
             )
             abort(
                 400,
                 f'Unsupported zoom level {zoom}, '
-                f'maxzoom is: {gagrid.getClosestZoom(max_resolution)}'
+                f'maxzoom is: {gagrid.getClosestZoom(resolution_max)}'
             )
         # put tiles to s3
-        write_s3 = resolution >= s3_max_resolution
+        write_s3 = resolution >= s3_resolution_max
     else:
         msg = 'Unsupported Layer %s'
         logger.error(msg, layer_id)
