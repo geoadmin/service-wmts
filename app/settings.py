@@ -26,6 +26,8 @@ BOD_DB_HOST = os.environ['BOD_DB_HOST']
 BOD_DB_PORT = os.getenv('BOD_DB_PORT', '5432')
 BOD_DB_USER = os.environ['BOD_DB_USER']
 BOD_DB_PASSWD = os.environ['BOD_DB_PASSWD']
+BOD_DB_CONNECT_TIMEOUT = int(os.getenv('BOD_DB_CONNECT_TIMEOUT', '10'))
+BOD_DB_CONNECT_RETRIES = int(os.getenv('BOD_DB_CONNECT_RETRIES', '3'))
 NO_CACHE = 'public, must-revalidate, proxy-revalidate, max-age=0'
 DEFAULT_CACHE = 'public, max-age=1800'
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')

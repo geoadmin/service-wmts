@@ -19,29 +19,38 @@ def get_wmts_config_by_layer(layer_id):
         return None
 
 
+def connect_to_db():
+    retries = settings.BOD_DB_CONNECT_RETRIES
+    while True:
+        logger.debug(
+            'Connecting to %s db on host %s',
+            settings.BOD_DB_NAME,
+            settings.BOD_DB_HOST
+        )
+        try:
+            connection = psy.connect(
+                dbname=settings.BOD_DB_NAME,
+                user=settings.BOD_DB_USER,
+                password=settings.BOD_DB_PASSWD,
+                host=settings.BOD_DB_HOST,
+                port=settings.BOD_DB_PORT,
+                connect_timeout=settings.BOD_DB_CONNECT_TIMEOUT
+            )
+            return connection
+        except psy.Error as error:
+            logger.error("Unable to connect (retries=%d): %s", retries, error)
+            if error.pgerror:
+                logger.error('pgerror: %s', error.pgerror)
+            if error.diag.message_detail:
+                logger.error('message detail: %s', error.diag.message_detail)
+            retries -= 1
+            if retries < 0:
+                raise
+
+
 def get_wmts_config_from_db():
     # Connect to database
-    logger.debug(
-        'Connecting to %s db on host %s',
-        settings.BOD_DB_NAME,
-        settings.BOD_DB_HOST
-    )
-    try:
-        connection = psy.connect(
-            dbname=settings.BOD_DB_NAME,
-            user=settings.BOD_DB_USER,
-            password=settings.BOD_DB_PASSWD,
-            host=settings.BOD_DB_HOST,
-            port=settings.BOD_DB_PORT,
-            connect_timeout=5
-        )
-    except psy.Error as error:
-        logger.error("Unable to connect: %s", error)
-        if error.pgerror:
-            logger.error('pgerror: %s', error.pgerror)
-        if error.diag.message_detail:
-            logger.error('message detail: %s', error.diag.message_detail)
-        raise
+    connection = connect_to_db()
 
     # Open cursor for DB-Operations
     cursor = connection.cursor()
