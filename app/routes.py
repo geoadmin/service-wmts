@@ -29,6 +29,12 @@ from app.views import GetCapabilities
 logger = logging.getLogger(__name__)
 
 
+# Log each requests
+@app.before_request
+def log_route():
+    logger.info("%s %s", request.method, request.path)
+
+
 @app.route('/checker', methods=['GET'])
 def check():
     return make_response(
