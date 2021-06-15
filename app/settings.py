@@ -5,7 +5,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 ENV_FILE = os.getenv('ENV_FILE', f'{BASE_DIR}/.env.local')
-if ENV_FILE:
+if ENV_FILE and Path(ENV_FILE).exists():
     from dotenv import load_dotenv
 
     print(f"Running locally hence injecting env vars from {ENV_FILE}")
