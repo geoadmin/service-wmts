@@ -37,7 +37,7 @@ filters:
   flask:
     (): logging_utilities.filters.flask_attribute.FlaskRequestAttribute
     attributes:
-      - url
+      - path
       - method
       - headers
       - remote_addr
@@ -57,7 +57,7 @@ formatters:
     filter_attributes:
       - application
       - utc_isotime
-      - flask_request_url
+      - flask_request_path
       - flask_request_method
       - flask_request_headers
       - flask_request_json
@@ -73,7 +73,7 @@ formatters:
       process: process
       thread: thread
       request:
-        url: flask_request_url
+        path: flask_request_path
         method: flask_request_method
         headers: flask_request_headers
         data: flask_request_json
