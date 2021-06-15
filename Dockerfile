@@ -46,7 +46,6 @@ RUN cd /tmp && \
 
 USER geoadmin
 
-ENV WMTS_PORT $WMTS_PORT
 EXPOSE $WMTS_PORT
 
 # Use a real WSGI server
@@ -60,7 +59,6 @@ LABEL target=production
 
 USER geoadmin
 
-ENV WMTS_PORT $WMTS_PORT
 EXPOSE $WMTS_PORT
 
 # Use a real WSGI server
