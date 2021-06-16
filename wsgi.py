@@ -60,7 +60,7 @@ if __name__ == '__main__':
         'bind': '%s:%s' % ('0.0.0.0', WMTS_PORT),
         'worker_class': 'gevent',
         'workers': 2,  # scaling horizontally is left to Kubernetes
-        'timeout': 60,
+        'timeout': 10,
         'access_log_format':
             '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(B)s Bytes '
             '"%(f)s" "%(a)s" %(L)ss',
