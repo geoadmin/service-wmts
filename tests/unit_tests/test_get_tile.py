@@ -8,6 +8,9 @@ from PIL import Image
 
 from app import app
 from app import settings
+from app.helpers.wmts_config import init_wmts_config
+
+init_wmts_config()
 
 
 def get_image_data():

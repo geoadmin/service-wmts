@@ -1,4 +1,5 @@
 import logging
+import time
 
 import psycopg2 as psy
 
@@ -6,12 +7,12 @@ from app import settings
 
 logger = logging.getLogger(__name__)
 
-restrictions = {}
+RESTRICTIONS = {}
 
 
 def get_wmts_config_by_layer(layer_id):
     try:
-        restriction = restrictions[layer_id]
+        restriction = RESTRICTIONS[layer_id]
         logger.debug('Restriction for layer %s: %s', layer_id, restriction)
         return restriction
     except KeyError as error:
@@ -38,7 +39,13 @@ def connect_to_db():
             )
             return connection
         except psy.Error as error:
-            logger.error("Unable to connect (retries=%d): %s", retries, error)
+            logger.error(
+                "Unable to connect to %s:%d (retries=%d): %s",
+                settings.BOD_DB_HOST,
+                settings.BOD_DB_PORT,
+                retries,
+                error
+            )
             if error.pgerror:
                 logger.error('pgerror: %s', error.pgerror)
             if error.diag.message_detail:
@@ -70,10 +77,10 @@ def get_wmts_config_from_db():
     logger.info("Found %s records", total_records)
 
     # iterate through table
-    _restrictions = {}
+    restrictions = {}
     for i, record in enumerate(cursor):
         logger.debug('WMS config record %d: %s', i, record)
-        _restrictions[record[0]] = {
+        restrictions[record[0]] = {
             'timestamps': record[1],
             'formats': record[2],
             'resolution_min': record[3],
@@ -84,7 +91,11 @@ def get_wmts_config_from_db():
         }
 
     logger.info("All restrictions generated")
-    return _restrictions
+    return restrictions
 
 
-restrictions = get_wmts_config_from_db()
+def init_wmts_config():
+    global RESTRICTIONS  # pylint: disable=global-statement
+    started = time.time()
+    RESTRICTIONS = get_wmts_config_from_db()
+    logger.info('WMTS config initialized in %.3fs', time.time() - started)

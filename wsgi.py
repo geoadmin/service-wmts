@@ -18,6 +18,7 @@ from gunicorn.app.base import BaseApplication
 
 from app import app as application
 from app.helpers.logging_utils import get_logging_cfg
+from app.helpers.wmts_config import init_wmts_config
 
 
 class StandaloneApplication(BaseApplication):
@@ -43,6 +44,13 @@ class StandaloneApplication(BaseApplication):
         return self.application
 
 
+def on_starting(server):
+    # We initialize the wmts config here to do it only once, but only when
+    # the logging has been configured. If we do it in the app.__init__.py module
+    # the we don't have the logging yet configured and we don't get any logs
+    init_wmts_config()
+
+
 # We use the port 9000 as default, otherwise we set the HTTP_PORT env variable
 # within the container.
 if __name__ == '__main__':
@@ -53,6 +61,7 @@ if __name__ == '__main__':
         'worker_class': 'gevent',
         'workers': 2,  # scaling horizontally is left to Kubernetes
         'timeout': 60,
-        'logconfig_dict': get_logging_cfg()
+        'logconfig_dict': get_logging_cfg(),
+        'on_starting': on_starting
     }
     StandaloneApplication(application, options).run()
