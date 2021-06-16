@@ -174,18 +174,13 @@ app.add_url_rule(
 )
 app.add_url_rule(
     '/EPSG/<int:epsg>/<string:version>/WMTSCapabilities.xml',
-    defaults={'lang': 'de'},
     view_func=view_get_capabilities
 )
 app.add_url_rule(
     '/<string:version>/WMTSCapabilities.EPSG.<int:epsg>.xml',
-    defaults={'lang': 'de'},
     view_func=view_get_capabilities
 )
 app.add_url_rule(
     '/<string:version>/WMTSCapabilities.xml',
-    defaults={
-        'epsg': None, 'lang': None
-    },
-    view_func=view_get_capabilities
+    view_func=view_get_capabilities,
 )
