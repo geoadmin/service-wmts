@@ -61,6 +61,9 @@ if __name__ == '__main__':
         'worker_class': 'gevent',
         'workers': 2,  # scaling horizontally is left to Kubernetes
         'timeout': 60,
+        'access_log_format':
+            '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(B)s Bytes '
+            '"%(f)s" "%(a)s" %(L)ss',
         'logconfig_dict': get_logging_cfg(),
         'on_starting': on_starting
     }

@@ -1,10 +1,12 @@
 import logging
 import platform
+import time as _time
 
 import requests.exceptions
 
 from flask import Response
 from flask import abort
+from flask import g
 from flask import jsonify
 from flask import make_response
 from flask import request
@@ -31,8 +33,27 @@ logger = logging.getLogger(__name__)
 
 # Log each requests
 @app.before_request
-def log_route():
+def log_request():
+    g.setdefault('started', _time.time())
     logger.info("%s %s", request.method, request.path)
+
+
+@app.after_request
+def log_response(response):
+    logger.info(
+        "%s %s - %s",
+        request.method,
+        request.path,
+        response.status,
+        extra={
+            'response': {
+                "status_code": response.status_code,
+                "headers": dict(response.headers.items())
+            },
+            "duration": _time.time() - g.get('started', _time.time())
+        }
+    )
+    return response
 
 
 @app.route('/checker', methods=['GET'])
