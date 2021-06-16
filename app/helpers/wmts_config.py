@@ -23,7 +23,7 @@ def get_wmts_config_by_layer(layer_id):
 def connect_to_db():
     retries = settings.BOD_DB_CONNECT_RETRIES
     while True:
-        logger.debug(
+        logger.info(
             'Connecting to %s db on host %s',
             settings.BOD_DB_NAME,
             settings.BOD_DB_HOST
@@ -79,7 +79,7 @@ def get_wmts_config_from_db():
     # iterate through table
     restrictions = {}
     for i, record in enumerate(cursor):
-        logger.debug('WMS config record %d: %s', i, record)
+        # logger.debug('WMS config record %d: %s', i, record)
         restrictions[record[0]] = {
             'timestamps': record[1],
             'formats': record[2],
@@ -90,7 +90,6 @@ def get_wmts_config_from_db():
             'wms_gutter': record[7]
         }
 
-    logger.info("All restrictions generated")
     return restrictions
 
 
