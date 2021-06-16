@@ -24,11 +24,7 @@ class GetCapabilities(View):
     def dispatch_request(self, epsg, lang, version):  # pylint: disable=arguments-differ
         epsg, lang, version = self.get_and_validate_args(epsg, lang, version)
 
-        scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
-        url_base = f'{scheme}://{app.config["WMTS_PUBLIC_HOST"]}/'
-
-        models = self.get_models(lang)
-        context = self.get_context(models, epsg, lang, url_base, scheme)
+        context = self.get_context(self.get_models(lang), epsg, lang)
         return (
             render_template(
                 ['WmtsCapabilities.xml.jinja', 'StandardHeader.xml.jinja'],
@@ -59,7 +55,7 @@ class GetCapabilities(View):
         return localized_models[lang]
 
     @classmethod
-    def get_context(cls, models, epsg, lang, url_base, scheme):
+    def get_context(cls, models, epsg, lang):
         start = time.time()
         layers_capabilities = models['GetCap'].query.filter_by_staging(
             app.config['APP_STAGING']
@@ -84,8 +80,8 @@ class GetCapabilities(View):
             'zoom_levels': zoom_levels,
             'themes': themes,
             'metadata': metadata,
-            'scheme': scheme,
-            'url_base': url_base,
+            'scheme': request.scheme,
+            'url_base': f'{request.scheme}://{app.config["WMTS_PUBLIC_HOST"]}/',
             'epsg': epsg,
             'default_tile_matrix_set': get_default_tile_matrix_set(epsg),
             'legend_base_url': app.config["LEGENDS_BASE_URL"],
