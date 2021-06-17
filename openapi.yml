@@ -7,7 +7,7 @@ info:
     A RESTFul implementation of the [WMTS](https://www.ogc.org/standards/wmts) [OGC](https://www.ogc.org/) standard.
     For detailed information, see [WMTS OGC](https://www.ogc.org/standards/wmts) standard
 
-    *NOTE: Only the RESTFul request encoding to `GetTile` is implemented, not the `GetLegend` and `GetFeatureInfo`.
+    *NOTE: Only the RESTFul request encoding to `GetTile` and `GetCapabilities` are implemented, not the `GetLegend` and `GetFeatureInfo`.
     No KVP and SOAP request encoding is supported.*
 
 servers:
@@ -16,6 +16,8 @@ servers:
 tags:
   - name: Checker
     description: Endpoint to check the service status
+  - name: WMTS Capabilities
+    description: Get WMTS Capabilities endpoints
   - name: Tiles
     description: Get tiles endpoints
 
@@ -68,16 +70,8 @@ paths:
           $ref: "#/components/responses/backendWmsConnectionFailure"
         503:
           $ref: "#/components/responses/backendWmsFailure"
-  /{version}/{layer_id}/{style_name}/{time}/{srid}/{zoom}/{col}/{row}.{extension}:
+  /1.0.0/{layer_id}/{style_name}/{time}/{srid}/{zoom}/{col}/{row}.{extension}:
     parameters:
-      - name: version
-        in: path
-        required: true
-        description: WMTS protocol version. Only version `1.0.0.` is supported.
-        schema:
-          type: string
-          enum:
-            - "1.0.0"
       - name: layer_id
         in: path
         required: true
@@ -232,7 +226,68 @@ paths:
           $ref: "#/components/responses/backendWmsConnectionFailure"
         503:
           $ref: "#/components/responses/backendWmsFailure"
-
+  /1.0.0/WMTSCapabilities.xml:
+    get:
+      summary: Get Capabilities - alias 1
+      operationId: getCapabilities1
+      tags:
+        - WMTS Capabilities
+      parameters:
+        - $ref: "#/components/parameters/epsgQuery"
+        - $ref: "#/components/parameters/langQuery"
+      responses:
+        200:
+          $ref: "#/components/responses/capabilities"
+        400:
+          $ref: "#/components/responses/badRequestError"
+        500:
+          $ref: "#/components/responses/internalServerError"
+  /EPSG/{epsg}/1.0.0/WMTSCapabilities.xml:
+    parameters:
+      - $ref: "#/components/parameters/epsgPath"
+    get:
+      summary: Get Capabilities - alias 2
+      operationId: getCapabilities2
+      tags:
+        - WMTS Capabilities
+      responses:
+        200:
+          $ref: "#/components/responses/capabilities"
+        400:
+          $ref: "#/components/responses/badRequestError"
+        500:
+          $ref: "#/components/responses/internalServerError"
+  /EPSG/{epsg}/{lang}/1.0.0/WMTSCapabilities.xml:
+    parameters:
+      - $ref: "#/components/parameters/epsgPath"
+      - $ref: "#/components/parameters/langPath"
+    get:
+      summary: Get Capabilities - alias 3
+      operationId: getCapabilities3
+      tags:
+        - WMTS Capabilities
+      responses:
+        200:
+          $ref: "#/components/responses/capabilities"
+        400:
+          $ref: "#/components/responses/badRequestError"
+        500:
+          $ref: "#/components/responses/internalServerError"
+  /1.0.0/WMTSCapabilities.EPSG.{epsg}.xml:
+    parameters:
+      - $ref: "#/components/parameters/epsgPath"
+    get:
+      summary: Get Capabilities - alias 3
+      operationId: getCapabilities
+      tags:
+        - WMTS Capabilities
+      responses:
+        200:
+          $ref: "#/components/responses/capabilities"
+        400:
+          $ref: "#/components/responses/badRequestError"
+        500:
+          $ref: "#/components/responses/internalServerError"
 
 components:
   schemas:
@@ -251,7 +306,219 @@ components:
             message:
               type: string
               description: Description of the error.
+    epsg:
+      type: integer
+      enum:
+        - 2056
+        - 21781
+        - 3857
+        - 4326
+      default: 21781
+    language:
+      type: string
+      enum:
+        - de
+        - fr
+        - it
+        - rm
+        - en
+      default: de
+  parameters:
+    epsgQuery:
+      name: epsg
+      in: query
+      description: Returns the WMTS Capabilities for this EPSG
+      schema:
+        $ref: "#/components/schemas/epsg"
+    epsgPath:
+      name: epsg
+      in: path
+      required: true
+      description: Returns the WMTS Capabilities for this EPSG
+      schema:
+        $ref: "#/components/schemas/epsg"
+    langQuery:
+      name: lang
+      in: query
+      description: Returns the WMTS Capabilities in the given language
+      schema:
+        $ref: "#/components/schemas/language"
+    langPath:
+      name: lang
+      in: path
+      required: true
+      description: Returns the WMTS Capabilities in the given language
+      schema:
+        $ref: "#/components/schemas/language"
   responses:
+    capabilities:
+      description: WMTS Capabilities XML
+      content:
+          text/xml:
+            schema:
+              type: object
+              description: See [WMTS OGC](https://www.ogc.org/standards/wmts) standard for the details of the xml.
+            example: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+                            xmlns:ows="http://www.opengis.net/ows/1.1"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xmlns:gml="http://www.opengis.net/gml"
+                            xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd"
+                            version="1.0.0">
+                  <ows:ServiceIdentification>
+                      <ows:Title>WMTS BGDI</ows:Title>
+                      <ows:Abstract>-</ows:Abstract>
+                      <ows:Keywords>
+                          <ows:Keyword>Switzerland</ows:Keyword>
+                          <ows:Keyword>Web Map Service</ows:Keyword>
+                          <ows:Keyword>Schweiz</ows:Keyword>
+                          <ows:Keyword>OGC</ows:Keyword>
+                          <ows:Keyword>WMS</ows:Keyword>
+                          <ows:Keyword>swisstopo</ows:Keyword>
+                          <ows:Keyword>Bundesamt fuer Landestopografie</ows:Keyword>
+                          <ows:Keyword>Landeskarte</ows:Keyword>
+                          <ows:Keyword>Pixelkarte</ows:Keyword>
+                          <ows:Keyword>Luftbilder</ows:Keyword>
+                          <ows:Keyword>SWISSIMAGE</ows:Keyword>
+                          <ows:Keyword>Grenzen</ows:Keyword>
+                          <ows:Keyword>swissBOUNDARIES3D</ows:Keyword>
+                          <ows:Keyword>Historische Karten</ows:Keyword>
+                          <ows:Keyword>Siegfriedatlas</ows:Keyword>
+                          <ows:Keyword>Dufourkarte</ows:Keyword>
+                      </ows:Keywords>
+                      <ows:ServiceType>OGC WMTS</ows:ServiceType>
+                      <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+                      <ows:Fees>Einige Layer sind frei, andere nicht. Freemium Tier bis zu 25&#39;000 Megapixel/Jahr für die nicht freien Layer</ows:Fees>
+                      <ows:AccessConstraints>Anmeldung erforderlich: www.geo.admin.ch/api-signup</ows:AccessConstraints>
+                  </ows:ServiceIdentification>
+                  <ows:ServiceProvider>
+                      <ows:ProviderName>Bundesamt für Landestopografie swisstopo</ows:ProviderName>
+                      <ows:ProviderSite xlink:href="http://www.swisstopo.admin.ch"/>
+                      <ows:ServiceContact>
+                          <ows:IndividualName>David Oesch</ows:IndividualName>
+                          <ows:PositionName></ows:PositionName>
+                          <ows:ContactInfo>
+                              <ows:Phone>
+                                  <ows:Voice>+41 58 469 01 11</ows:Voice>
+                                  <ows:Facsimile>+41 58 469 04 59</ows:Facsimile>
+                              </ows:Phone>
+                              <ows:Address>
+                                  <ows:DeliveryPoint>swisstopo</ows:DeliveryPoint>
+                                  <ows:City>Bern</ows:City>
+                                  <ows:AdministrativeArea>BE</ows:AdministrativeArea>
+                                  <ows:PostalCode>3084</ows:PostalCode>
+                                  <ows:Country>Switzerland</ows:Country>
+                                  <ows:ElectronicMailAddress>webgis@swisstopo.ch</ows:ElectronicMailAddress>
+                              </ows:Address>
+                          </ows:ContactInfo>
+                      </ows:ServiceContact>
+                  </ows:ServiceProvider>
+                  <ows:OperationsMetadata>
+                      <ows:Operation name="GetCapabilities">
+                          <ows:DCP>
+                              <ows:HTTP>
+                                  <ows:Get xlink:href="https://wmts.geo.admin.ch/1.0.0/WMTSCapabilities.xml">
+                                      <ows:Constraint name="GetEncoding">
+                                          <ows:AllowedValues>
+                                              <ows:Value>REST</ows:Value>
+                                          </ows:AllowedValues>
+                                      </ows:Constraint>
+                                  </ows:Get>
+                              </ows:HTTP>
+                          </ows:DCP>
+                      </ows:Operation>
+                      <ows:Operation name="GetTile">
+                          <ows:DCP>
+                              <ows:HTTP>
+                                  <ows:Get xlink:href="https://wmts.geo.admin.ch/">
+                                      <ows:Constraint name="GetEncoding">
+                                          <ows:AllowedValues>
+                                              <ows:Value>REST</ows:Value>
+                                          </ows:AllowedValues>
+                                      </ows:Constraint>
+                                  </ows:Get>
+                              </ows:HTTP>
+                          </ows:DCP>
+                      </ows:Operation>
+                  </ows:OperationsMetadata>
+                  <Contents>
+                      <Layer>
+                          <ows:Title>Logistikräume ALC</ows:Title>
+                          <ows:Abstract>Zuständigkeitsräume der Armeelogistikcenter (ALC).</ows:Abstract>
+                          <ows:WGS84BoundingBox>
+                              <ows:LowerCorner>5.140242 45.398181</ows:LowerCorner>
+                              <ows:UpperCorner>11.47757 48.230651</ows:UpperCorner>
+                          </ows:WGS84BoundingBox>
+                          <ows:Identifier>ch.vbs.logistikraeume-armeelogistikcenter</ows:Identifier>
+                          <ows:Metadata xlink:href="https://www.geocat.ch/geonetwork/srv/ger/md.viewer#/full_view/270a2032-d346-42c5-a657-9129186f1f08"/>
+                          <Style>
+                              <ows:Title>Logistikräume ALC</ows:Title>
+                              <ows:Identifier>ch.vbs.logistikraeume-armeelogistikcenter</ows:Identifier>
+                              <LegendURL format="image/png" xlink:href="https://api3.geo.admin.ch/static/images/legends/ch.vbs.logistikraeume-armeelogistikcenter_de.png"/>
+                          </Style>
+                          <Format>image/png</Format>
+                          <Dimension>
+                              <ows:Identifier>Time</ows:Identifier>
+                              <Default>20141217</Default>
+                              <Value>20141217</Value>
+                          </Dimension>
+                          <TileMatrixSetLink>
+                              <TileMatrixSet>2056_26</TileMatrixSet>
+                          </TileMatrixSetLink>
+                          <ResourceURL format="image/png" resourceType="tile" template="https://wmts.geo.admin.ch/1.0.0/ch.vbs.logistikraeume-armeelogistikcenter/default/{Time}/2056/{TileMatrix}/{TileCol}/{TileRow}.png"/>
+                      </Layer>
+
+                      <TileMatrixSet>
+                          <ows:Identifier>2056_18</ows:Identifier>
+                          <ows:SupportedCRS>urn:ogc:def:crs:EPSG:2056</ows:SupportedCRS>
+                          <TileMatrix>
+                              <ows:Identifier>0</ows:Identifier>
+                              <ScaleDenominator>14285714.285714287</ScaleDenominator>
+                              <TopLeftCorner>2420000.0 1350000.0</TopLeftCorner>
+                              <TileWidth>256</TileWidth>
+                              <TileHeight>256</TileHeight>
+                              <MatrixWidth>1</MatrixWidth>
+                              <MatrixHeight>1</MatrixHeight>
+                          </TileMatrix>
+                      </TileMatrixSet>
+
+                  </Contents>
+                  <Themes>
+                      <Theme>
+                          <ows:Title>Basisdaten</ows:Title>
+                          <ows:Abstract>Basisdaten</ows:Abstract>
+                          <ows:Identifier>23c58de608ebd19b6d5908fd82aecd00</ows:Identifier>
+                          <Theme>
+                              <ows:Title>Koordinatenreferenzsysteme</ows:Title>
+                              <ows:Abstract>Koordinatenreferenzsysteme</ows:Abstract>
+                              <ows:Identifier>2</ows:Identifier>
+                              <LayerRef>ch.swisstopo.dreiecksvermaschung</LayerRef>
+                              <LayerRef>ch.swisstopo.fixpunkte-agnes</LayerRef>
+                              <LayerRef>ch.swisstopo.geoidmodell-ch1903</LayerRef>
+                              <LayerRef>ch.swisstopo.geoidmodell-etrs89</LayerRef>
+                              <LayerRef>ch.swisstopo.koordinatenaenderung</LayerRef>
+                              <LayerRef>ch.swisstopo.transformationsgenauigkeit</LayerRef>
+                              <LayerRef>ch.swisstopo-vd.spannungsarme-gebiete</LayerRef>
+                              <LayerRef>ch.swisstopo.verschiebungsvektoren-tsp1</LayerRef>
+                              <LayerRef>ch.swisstopo.verschiebungsvektoren-tsp2</LayerRef>
+                          </Theme>
+                      </Theme>
+                  </Themes>
+                  <ServiceMetadataURL xlink:href="https://wmts.geo.admin.ch/1.0.0/WMTSCapabilities.xml"/>
+              </Capabilities>
+    badRequestError:
+      description: 400 Bad Request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+            example:
+              success: false
+              error:
+                code: 400
+                message: "Unsupported epsg 20536, must be on of [21781, 2056, 3857, 4326]"
     internalServerError:
       description: Unexpected error.
       content:
