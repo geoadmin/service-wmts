@@ -4,6 +4,7 @@
 .gitmodules
 .github
 **/*.md
+*.orig
 
 # Docker
 docker-compose.yml
@@ -28,6 +29,11 @@ logs/
 .volumes
 
 # environment
-.env.local
-.env.ci
+.env.*
 minio.env
+
+# All hidden files
+.*
+
+# Makefile
+Makefile

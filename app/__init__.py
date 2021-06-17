@@ -27,8 +27,7 @@ app.config.from_object('app.settings')
 # Setup the DB
 db = SQLAlchemy(app)
 
-# TODO CLEAN_UP: check if the reverse proxy is needed or not
-# app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
+app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed
 celery = make_celery(app)

@@ -1,4 +1,3 @@
-# TODO CLEAN_UP: remove it if not needed
 class ReverseProxy(object):
     """
     Reverse proxies can cause some problems within applications, as they change
@@ -55,7 +54,14 @@ class ReverseProxy(object):
             if path_info.startswith(script_name):
                 environ['PATH_INFO'] = path_info[len(script_name):]
         # The scheme is the protocol used (http/s) to connect to the server.
-        scheme = environ.get('HTTP_X_SCHEME', '') or self.scheme
+        if 'HTTP_CLOUDFRONT_FORWARDED_PROTO' in environ:
+            scheme = environ['HTTP_CLOUDFRONT_FORWARDED_PROTO']
+        elif 'HTTP_X_FORWARDED_PROTO' in environ:
+            scheme = environ['HTTP_X_FORWARDED_PROTO']
+        elif 'HTTP_X_SCHEME' in environ:
+            scheme = environ['HTTP_X_SCHEME']
+        else:
+            scheme = self.scheme
         if scheme:
             environ['wsgi.url_scheme'] = scheme
         # this sets our own HOST parameter to be the one that was queried in
