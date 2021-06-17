@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 class GetCapabilities(View):
     methods = ['GET']
 
-    def dispatch_request(self, epsg, lang, version):  # pylint: disable=arguments-differ
-        epsg, lang, version = self.get_and_validate_args(epsg, lang, version)
+    # pylint: disable=arguments-differ
+    def dispatch_request(self, version, epsg=None, lang=None):
+        epsg, lang, version = self.get_and_validate_args(version, epsg, lang)
 
         context = self.get_context(self.get_models(lang), epsg, lang)
         return (
@@ -36,7 +37,7 @@ class GetCapabilities(View):
         )
 
     @classmethod
-    def get_and_validate_args(cls, epsg, lang, version):
+    def get_and_validate_args(cls, version, epsg, lang):
         # If no epsg and/or lang argument in path is given, take it
         # from the query arguments.
         if epsg is None:
