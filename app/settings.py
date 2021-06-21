@@ -62,3 +62,8 @@ SQLALCHEMY_TRACK_MODIFICATIONS = strtobool(
 )
 
 LEGENDS_BASE_URL = "https://api3.geo.admin.ch/static/images/legends"
+
+# Unittest configuration
+UNITTEST_SKIP_XML_VALIDATION = strtobool(
+    os.getenv('UNITTEST_SKIP_XML_VALIDATION', 'False')
+)
