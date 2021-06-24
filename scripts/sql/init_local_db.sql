@@ -5,7 +5,7 @@ CREATE ROLE "www-data" WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB LOGIN NO
 
 CREATE SCHEMA "service-wmts";
 
-GRANT USAGE ON SCHEMA "service-wmts" TO "www-data";
+GRANT ALL ON SCHEMA "service-wmts" TO "www-data";
 
 -- create tables
 CREATE TABLE public.tileset

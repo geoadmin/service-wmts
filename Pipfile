@@ -28,6 +28,7 @@ nose2 = "*"
 requests-mock = "*"
 pylint-sqlalchemy = "~=0.2.0"
 pylint-flask-sqlalchemy = "~=0.2.0"
+lxml = "*"
 
 [requires]
 python_version = "3.7"

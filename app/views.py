@@ -6,7 +6,7 @@ from flask import request
 from flask.views import View
 
 from app import app
-from app.helpers.capabilities import get_layers_zoom_level_set
+from app.helpers.utils import get_closest_zoom
 from app.helpers.utils import get_default_tile_matrix_set
 from app.helpers.wmts import validate_epsg
 from app.helpers.wmts import validate_lang
@@ -56,24 +56,40 @@ class GetCapabilities(View):
         return localized_models[lang]
 
     @classmethod
-    def get_context(cls, models, epsg, lang):
-        start = time.time()
-        layers_capabilities = models['GetCap'].query.filter_by_staging(
-            app.config['APP_STAGING']
-        )
-        logger.debug('GetCap query done in %fs', time.time() - start)
-        start_int = time.time()
-        zoom_levels = get_layers_zoom_level_set(epsg, layers_capabilities)
-        logger.debug('get layers zoom done in %fs', time.time() - start_int)
-        start_int = time.time()
-        themes = models['GetCapThemes'].query.order_by(
-            GetCapThemes.inspire_upper_theme_id
-        ).all()
-        logger.debug('get cap themes in %fs', time.time() - start_int)
-        start_int = time.time()
-        metadata = models['ServiceMetadata'].query.filter(
+    def get_layers_capabilities(cls, model):
+        return model.query.filter_by_staging(app.config['APP_STAGING'])
+
+    @classmethod
+    def get_layers_zoom_level_set(cls, epsg, layers_capabilities):
+        zoom_levels = set()
+        for layer in layers_capabilities:
+            zoom = get_closest_zoom(layer.resolution_max, epsg)
+            zoom_levels.add(zoom)
+        return zoom_levels
+
+    @classmethod
+    def get_themes(cls, model):
+        return model.query.order_by(GetCapThemes.inspire_upper_theme_id).all()
+
+    @classmethod
+    def get_metadata(cls, model):
+        return model.query.filter(
             ServiceMetadata.pk_map_name.like('%wmts-bgdi%')
         ).first()
+
+    @classmethod
+    def get_context(cls, models, epsg, lang):
+        start = time.time()
+        layers_capabilities = cls.get_layers_capabilities(models['GetCap'])
+        logger.debug('GetCap query done in %fs', time.time() - start)
+        start_int = time.time()
+        zoom_levels = cls.get_layers_zoom_level_set(epsg, layers_capabilities)
+        logger.debug('get layers zoom done in %fs', time.time() - start_int)
+        start_int = time.time()
+        themes = cls.get_themes(models['GetCapThemes'])
+        logger.debug('get cap themes in %fs', time.time() - start_int)
+        start_int = time.time()
+        metadata = cls.get_metadata(models['ServiceMetadata'])
         logger.debug('get metadata done in %fs', time.time() - start_int)
         logger.debug('Zoom levels: %s', zoom_levels)
         context = {

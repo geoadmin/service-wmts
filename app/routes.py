@@ -170,17 +170,21 @@ def get_tile(
 view_get_capabilities = GetCapabilities.as_view('get_capabilities')
 app.add_url_rule(
     '/EPSG/<int:epsg>/<string:lang>/<string:version>/WMTSCapabilities.xml',
+    endpoint='get_capabilities_1',
     view_func=view_get_capabilities
 )
 app.add_url_rule(
     '/EPSG/<int:epsg>/<string:version>/WMTSCapabilities.xml',
+    endpoint='get_capabilities_2',
     view_func=view_get_capabilities
 )
 app.add_url_rule(
     '/<string:version>/WMTSCapabilities.EPSG.<int:epsg>.xml',
+    endpoint='get_capabilities_3',
     view_func=view_get_capabilities
 )
 app.add_url_rule(
     '/<string:version>/WMTSCapabilities.xml',
+    endpoint='get_capabilities_4',
     view_func=view_get_capabilities,
 )

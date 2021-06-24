@@ -153,6 +153,7 @@ make lint-spec
 | LOGGING_CFG | `./config/logging-cfg-local.yml` | Logging configuration file |
 | LOGS_DIR | `./logs` | Logging output directory. Only used by local logging configuration file. |
 | DEFAULT_MODE | `default` | Default operation mode see [Operation Mode](#mode---operation-mode) |
+| UNITTEST_SKIP_XML_VALIDATION | `False` | Validating Get Capabilities XML output in Unittest takes time (~32s), therefore with this variable you can skip this test. |
 
 ### WMS configuration
 
