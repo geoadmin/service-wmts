@@ -130,7 +130,7 @@ format-lint: format lint
 
 .PHONY: test
 test:
-	$(NOSE) -c tests/unittest.cfg --verbose -s tests/
+	$(NOSE) -c tests/unittest.cfg --verbose
 
 
 # Serve targets. Using these will run the application on your local machine. You can either serve with a wsgi front (like it would be within the container), or without.

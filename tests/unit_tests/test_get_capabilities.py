@@ -55,22 +55,25 @@ class GetCapabilitiesTest(unittest.TestCase):
     @patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_get_capabilities_no_data_all_routes(self, query_mock):
         query_mock.return_value.all.return_value = []
-        for url, url_args in [(
-            'get_capabilities_1', {'epsg': 2056, 'lang': 'fr'}
+        for url, url_args, url_params in [(
+            'get_capabilities_1', {'epsg': 2056, 'lang': 'fr'}, {}
         ), (
-            'get_capabilities_1', {'epsg': 4326, 'lang': 'it'}
+            'get_capabilities_1', {'epsg': 4326, 'lang': 'it'}, {}
         ), (
-            'get_capabilities_1', {'epsg': 21781, 'lang': 'en'}
+            'get_capabilities_1', {'epsg': 21781, 'lang': 'en'}, {}
         ), (
-            'get_capabilities_2', {'epsg': 3857}
+            'get_capabilities_2', {'epsg': 3857}, {}
         ), (
-            'get_capabilities_3', {'epsg': 4326}
+            'get_capabilities_3', {'epsg': 4326}, {}
         ), (
-            'get_capabilities_4', {}
+            'get_capabilities_4', {}, {'epsg': '2056'}
         )]:
-            with self.subTest(url=url, url_args=url_args):
+            with self.subTest(
+                url=url, url_args=url_args, url_params=url_params
+            ):
                 response = self.client.get(
-                    url_for(url, version='1.0.0', **url_args)
+                    url_for(url, version='1.0.0', **url_args),
+                    query_string=url_params
                 )
 
                 self.assertEqual(response.status_code, 200)

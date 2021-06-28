@@ -3,7 +3,9 @@ from datetime import datetime
 
 from gatilegrid import getTileGrid
 from PIL import Image
+from werkzeug import exceptions
 
+from app import app
 from app.helpers.utils import crop_image
 from app.helpers.utils import extend_bbox
 from app.helpers.utils import is_still_valid_tile
@@ -11,6 +13,7 @@ from app.helpers.utils import tile_address
 from app.helpers.wms import get_wms_params
 from app.helpers.wmts import get_wmts_path
 from app.helpers.wmts import prepare_wmts_cached_response
+from app.views import GetCapabilities
 
 
 class MockResponse:
@@ -22,7 +25,7 @@ class MockResponse:
         return self.headers.get(name)
 
 
-class FunctionalTests(unittest.TestCase):
+class FunctionalGetTileTests(unittest.TestCase):
 
     def test_crop_image(self):
         gutter = 30
@@ -158,3 +161,50 @@ class FunctionalTests(unittest.TestCase):
                   rule-id="all 2056 PK grau - prefix and tag 16/2/1, 5
                   days" """
         self.assertEqual(is_still_valid_tile(headers, datetime.now()), False)
+
+
+class FunctionalGetCapTests(unittest.TestCase):
+
+    def test_invalid_query(self):
+        with self.assertRaises(exceptions.BadRequest) as context:
+            with app.test_request_context('/1.0.0/WMTSCapabilities?epsg=abc'):
+                GetCapabilities.get_and_validate_args(
+                    version='1.0.0', epsg=None, lang=None
+                )
+        exception = context.exception
+        self.assertEqual(
+            exception.description, 'Invalid epsg "abc", must be an integer'
+        )
+
+        with self.assertRaises(exceptions.BadRequest) as context:
+            with app.test_request_context('/1.0.0/WMTSCapabilities?lang=123'):
+                GetCapabilities.get_and_validate_args(
+                    version='1.0.0', epsg=None, lang=None
+                )
+        exception = context.exception
+        self.assertEqual(
+            exception.description,
+            "Unsupported lang 123, must be on of ['de', 'fr', 'it', 'rm', 'en']"
+        )
+
+        with self.assertRaises(exceptions.BadRequest) as context:
+            with app.test_request_context('/1.0.0/WMTSCapabilities'):
+                GetCapabilities.get_and_validate_args(
+                    version='unknown', epsg=None, lang=None
+                )
+        exception = context.exception
+        self.assertEqual(
+            exception.description,
+            'Unsupported version: unknown. Only "1.0.0" is supported.'
+        )
+
+    def test_valid_query(self):
+        with app.test_request_context(
+            '/1.0.0/WMTSCapabilities?epsg=2056&lang=fr'
+        ):
+            version, epsg, lang = GetCapabilities.get_and_validate_args(
+                version='1.0.0', epsg=None, lang=None
+            )
+        self.assertEqual(version, '1.0.0')
+        self.assertEqual(epsg, 2056)
+        self.assertEqual(lang, 'fr')
