@@ -29,7 +29,7 @@ class GetCapabilities(View):
         context = self.get_context(self.get_models(lang), epsg, lang)
         return (
             render_template(
-                ['WmtsCapabilities.xml.jinja', 'StandardHeader.xml.jinja'],
+                'WmtsCapabilities.xml.jinja',
                 **context,
             ),
             {

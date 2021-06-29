@@ -29,7 +29,7 @@ BOD_DB_PASSWD = os.environ['BOD_DB_PASSWD']
 BOD_DB_CONNECT_TIMEOUT = int(os.getenv('BOD_DB_CONNECT_TIMEOUT', '10'))
 BOD_DB_CONNECT_RETRIES = int(os.getenv('BOD_DB_CONNECT_RETRIES', '3'))
 NO_CACHE = 'public, must-revalidate, proxy-revalidate, max-age=0'
-DEFAULT_CACHE = 'public, max-age=1800'
+DEFAULT_CACHE = os.getenv('DEFAULT_CACHE', 'public, max-age=1800')
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed
@@ -61,7 +61,9 @@ SQLALCHEMY_TRACK_MODIFICATIONS = strtobool(
     os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False')
 )
 
-LEGENDS_BASE_URL = "https://api3.geo.admin.ch/static/images/legends"
+LEGENDS_BASE_URL = os.getenv(
+    "LEGENDS_BASE_URL", "https://api3.geo.admin.ch/static/images/legends"
+)
 
 # Unittest configuration
 UNITTEST_SKIP_XML_VALIDATION = strtobool(
