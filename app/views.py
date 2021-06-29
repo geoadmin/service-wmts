@@ -1,6 +1,7 @@
 import logging
 import time
 
+from flask import abort
 from flask import render_template
 from flask import request
 from flask.views import View
@@ -23,7 +24,7 @@ class GetCapabilities(View):
 
     # pylint: disable=arguments-differ
     def dispatch_request(self, version, epsg=None, lang=None):
-        epsg, lang, version = self.get_and_validate_args(version, epsg, lang)
+        version, epsg, lang = self.get_and_validate_args(version, epsg, lang)
 
         context = self.get_context(self.get_models(lang), epsg, lang)
         return (
@@ -41,7 +42,12 @@ class GetCapabilities(View):
         # If no epsg and/or lang argument in path is given, take it
         # from the query arguments.
         if epsg is None:
-            epsg = request.args.get('epsg', 21781)
+            try:
+                epsg = request.args.get('epsg', '21781')
+                epsg = int(epsg)
+            except ValueError as error:
+                logger.error('Invalid epsg=%s, must be an int: %s', epsg, error)
+                abort(400, f'Invalid epsg "{epsg}", must be an integer')
         if lang is None:
             lang = request.args.get('lang', 'de')
 
@@ -49,7 +55,7 @@ class GetCapabilities(View):
         validate_lang(lang)
         validate_version(version)
 
-        return epsg, lang, version
+        return version, epsg, lang
 
     @classmethod
     def get_models(cls, lang):

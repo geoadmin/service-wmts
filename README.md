@@ -13,6 +13,7 @@
   - [dependencies](#dependencies)
   - [Setting up to work](#setting-up-to-work)
   - [Running the server locally](#running-the-server-locally)
+  - [Unittesting](#unittesting)
   - [Docker helpers](#docker-helpers)
   - [Linting and formatting your work](#linting-and-formatting-your-work)
 - [Service configuration](#service-configuration)
@@ -103,6 +104,21 @@ or the following to run the service in a docker image locally:
 
 ```bash
 make dockerrun
+```
+
+### Unittesting
+
+To run the unittest enter:
+
+```bash
+make test
+```
+
+To run only a single test module/class/method enter:
+
+```bash
+pipenv shell # activate the virtual environment
+nose2 -c tests/unittest.cfg -t ${PWD} tests.unit_tests.test_functional
 ```
 
 ### Docker helpers
