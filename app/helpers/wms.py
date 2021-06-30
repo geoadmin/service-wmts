@@ -75,10 +75,12 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
         response = get_wms_resource(
             bbox, extension, srid, layer_id, gutter, time
         )
+        r_headers = response.headers
+        content_type = r_headers.get('Content-Type', 'text/xml')
         logger.debug(
             'WMS response %s; content-type: %s, content: %s',
             response.status_code,
-            response.headers['Content-Type'],
+            content_type,
             response.content[:64]
         )
     except requests.exceptions.Timeout as error:
@@ -93,14 +95,12 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
 
     # Optimize images
     # Detect/Create transparent images
-    r_headers = dict(response.headers)
-    content_type = r_headers.get('Content-Type', 'text/xml')
     if 'text/xml' in content_type:
         logger.error(
-            'Unable to process the request: %s. '
+            'Unable to process the request: '
             'Wms response content type is %s',
-            response.content,
-            content_type
+            content_type,
+            extra={"wms_response": response.text}
         )
         abort(501, 'Unable to process the request: %s' % response.content)
     headers = {}
