@@ -30,7 +30,7 @@ services:
     environment:
       RABBITMQ_PORT: 5672
   celery-workers:
-    image: "swisstopo/service-wmts:celery-workers-ci"
+    image: "974517877189.dkr.ecr.eu-central-1.amazonaws.com/service-wmts:celery-workers-ci"
     build: .
     env_file:
       .env.ci
@@ -52,7 +52,7 @@ services:
       - rabbitmq
       - db
   app:
-    image: "swisstopo/service-wmts-ci"
+    image: "974517877189.dkr.ecr.eu-central-1.amazonaws.com/service-wmts-ci"
     build:
         context: .
         target: unittest
