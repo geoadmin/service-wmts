@@ -17,7 +17,9 @@ RUN cd /tmp && \
     pipenv install --system --deploy --ignore-pipfile
 
 WORKDIR /service-wmts
-COPY --chown=geoadmin:geoadmin ./ /service-wmts/
+COPY --chown=geoadmin:geoadmin ./app               /service-wmts/app/
+COPY --chown=geoadmin:geoadmin ./config/           /service-wmts/config/
+COPY --chown=geoadmin:geoadmin openapi.yml wsgi.py /service-wmts/
 
 ARG GIT_HASH=unknown
 ARG GIT_BRANCH=unknown
@@ -40,6 +42,9 @@ RUN echo "APP_VERSION = '$VERSION'" > /service-wmts/app/version.py
 FROM base as unittest
 
 LABEL target=unittest
+
+COPY --chown=geoadmin:geoadmin ./scripts /scripts/
+COPY --chown=geoadmin:geoadmin ./tests   /service-wmts/tests/
 
 RUN cd /tmp && \
     pipenv install --system --deploy --ignore-pipfile --dev

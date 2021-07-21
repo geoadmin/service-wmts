@@ -31,13 +31,15 @@ services:
       RABBITMQ_PORT: 5672
   celery-workers:
     image: "974517877189.dkr.ecr.eu-central-1.amazonaws.com/service-wmts:celery-workers-ci"
-    build: .
+    build:
+      context: .
+      target: unittest
     env_file:
       .env.ci
     environment:
       LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
     entrypoint:
-      - /service-wmts/scripts/wait-for-it.sh
+      - /scripts/wait-for-it.sh
       - db:5432
       - --
       - celery
@@ -57,7 +59,7 @@ services:
         context: .
         target: unittest
     entrypoint:
-      - /service-wmts/scripts/wait-for-it.sh
+      - /scripts/wait-for-it.sh
       - db:5432
       - --
       - nose2
