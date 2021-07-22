@@ -69,27 +69,23 @@ def add_cors_and_cache_header(response):
 
 
 # Register error handler to return an error based on the accept header
-@app.errorhandler(HTTPException)
+@app.errorhandler(Exception)
 def handle_exception(error):
-    logger.error(
-        'Request failed code=%d description=%s', error.code, error.description
-    )
+    if isinstance(error, HTTPException):
+        logger.error(
+            'Request failed code=%d description=%s',
+            error.code,
+            error.description
+        )
+        if 'Accept' in request.headers and 'text/html' in request.headers[
+            'Accept']:
+            return error
+        return make_error_msg(error.code, error.description)
+
+    logger.exception('Unexpected exception: %s', error)
     if 'Accept' in request.headers and 'text/html' in request.headers['Accept']:
         return error
-    return make_error_msg(error.code, error.description)
+    return make_error_msg(500, "Internal server error, please consult logs")
 
 
-# isort: off
-from app import routes  # pylint: disable=wrong-import-position
-
-
-def main():
-    app.run()
-
-
-if __name__ == '__main__':
-    """
-    Entrypoint for the application. At the moment, we do nothing specific, but
-    there might be preparatory steps in the future
-    """
-    main()
+from app import routes  # isort:skip pylint: disable=wrong-import-position

@@ -15,6 +15,7 @@ if ENV_FILE and Path(ENV_FILE).exists():
 # Loggings settings are directly imported in their module
 # LOGGING_CFG = os.getenv('LOGGING_CFG')
 # LOGS_DIR = os.getenv('LOGS_DIR')
+TRAP_HTTP_EXCEPTIONS = True
 APP_STAGING = os.getenv('APP_STAGING', 'prod')
 WMTS_PUBLIC_HOST = os.getenv('WMTS_PUBLIC_HOST', 'wmts.geo.admin.ch')
 REFERER_URL = os.getenv('PROXYWMS_REFERER_URL', 'https://proxywms.geo.admin.ch')

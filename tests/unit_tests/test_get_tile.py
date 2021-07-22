@@ -343,7 +343,8 @@ class ErrorRequestsTests(unittest.TestCase):
             'public, must-revalidate, proxy-revalidate, max-age=0'
         )
         self.assertIn(
-            'server encountered an internal error', resp.get_data(as_text=True)
+            'Internal server error, please consult logs',
+            resp.get_data(as_text=True)
         )
 
     @requests_mock.Mocker()
