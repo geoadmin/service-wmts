@@ -58,3 +58,18 @@ nose2-junit.xml
 
 # visual studio code config
 .vscode
+
+# minio volumes
+.volumes
+
+# logs file
+logs/
+
+# AWS cli builds on Codebuild
+awscliv2.zip
+aws/
+
+# .env files
+.env.*
+!.env.ci
+!.env.local

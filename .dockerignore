@@ -1,21 +1,40 @@
 # Git
 .git
+.github
 .gitignore
 .gitmodules
+**/*.orig
 **/*.md
+*.orig
 
 # Docker
 docker-compose.yml
+docker-compose-*.yml
 docker-compose.yml.in
 .docker
+.dockerignore
 
 # Python
-*.pyc
-__pycache__
+.venv
+**/*.pyc
+**/__pycache__
 
 # Files not used within docker
-./tests/*
+service_wmts.py
 Makefile
-.venv
-lib-makefiles/*
 buildspec.yml
+.isort.cfg
+.pylintrc
+.style.yapf
+
+# logs and volumes
+logs
+.volumes
+
+# environment
+.env.*
+minio.env
+
+# All hidden files
+.*
+

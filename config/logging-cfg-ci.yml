@@ -39,45 +39,18 @@ filters:
 
 formatters:
   standard:
+    (): logging_utilities.formatters.extra_formatter.ExtraFormatter
     format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
   verbose:
-    format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s : url=%(request_url)s headers=%(request_headers)s payload=%(request_json)s"
-  json:
-    (): logging_utilities.formatters.json_formatter.JsonFormatter
-    add_always_extra: True
-    filter_attributes:
-      - application
-      - utc_isotime
-      - flask_request_url
-      - flask_request_method
-      - flask_request_headers
-      - flask_request_json
-      - flask_request_remote_addr
-    remove_empty: True
-    fmt:
-      time: utc_isotime
-      level: levelname
-      app: application
-      logger: name
-      module: module
-      function: funcName
-      process: process
-      thread: thread
-      request:
-        url: flask_request_url
-        method: flask_request_method
-        headers: flask_request_headers
-        data: flask_request_json
-        remote: flask_request_remote_addr
-      exc_info: exc_info
-      message: message
+    (): logging_utilities.formatters.extra_formatter.ExtraFormatter
+    format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
+    extra_fmt: " : url=%(request_url)s headers=%(request_headers)s payload=%(request_json)s"
 
 handlers:
   console:
     class: logging.StreamHandler
-    formatter: json
+    formatter: standard
     stream: ext://sys.stdout
     filters:
-      - application
       - isotime
       - flask
