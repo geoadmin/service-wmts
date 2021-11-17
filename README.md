@@ -181,6 +181,10 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | DEFAULT_MODE | `default` | Default operation mode see [Operation Mode](#mode---operation-mode) |
 | UNITTEST_SKIP_XML_VALIDATION | `False` | Validating Get Capabilities XML output in Unittest takes time (~32s), therefore with this variable you can skip this test. |
 | DEFAULT_CACHE | `'public, max-age=1800'` | Default cache settings all requests. Note for GetTile this is overridden by the `cache_ttl` value from BOD. |
+| FORWARED_ALLOW_IPS | `*` | Sets the gunicorn `forwarded_allow_ips`. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#forwarded-allow-ips). This setting is required in order to `secure_scheme_headers` to work. |
+| FORWARDED_PROTO_HEADER_NAME | `X-Forwarded-Proto` | Sets gunicorn `secure_scheme_headers` parameter to `{${FORWARDED_PROTO_HEADER_NAME}: 'https'}`. This settings is required in order to generate correct URLs in the service responses. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#secure-scheme-headers). |
+| SCRIPT_NAME | `''` | If the service is behind a reverse proxy and not served at the root, the route prefix must be set in `SCRIPT_NAME`. |
+| WMTS_WORKERS | `0` | WMTS service number of workers. 0 or negative value means that the number of worker are computed from the number of cpu. |
 
 ### WMS configuration
 
@@ -213,7 +217,6 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | Variable | Default | Description |
 |---|---|---|
 | APP_STAGING | `'prod'` | Filter the capabilities for this staging |
-| WMTS_PUBLIC_HOST | `wmts.geo.admin.ch` | WMTS host to use in GetCapabilities |
 | LEGENDS_BASE_URL | `"https://api3.geo.admin.ch/static/images/legends"` | Legend base url used in GetCapabilities |
 
 ## GetTile
