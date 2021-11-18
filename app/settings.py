@@ -16,8 +16,16 @@ if ENV_FILE and Path(ENV_FILE).exists():
 # LOGGING_CFG = os.getenv('LOGGING_CFG')
 # LOGS_DIR = os.getenv('LOGS_DIR')
 TRAP_HTTP_EXCEPTIONS = True
+WMTS_PORT = str(os.environ.get('WMTS_PORT', "9000"))
+FORWARED_ALLOW_IPS = os.getenv('FORWARED_ALLOW_IPS', '*')
+FORWARDED_PROTO_HEADER_NAME = os.getenv(
+    'FORWARDED_PROTO_HEADER_NAME', 'X-Forwarded-Proto'
+).upper()
+WMTS_WORKERS = int(os.getenv('WORKERS', '0'))
+if WMTS_WORKERS <= 0:
+    from multiprocessing import cpu_count
+    WMTS_WORKERS = (cpu_count() * 2) + 1
 APP_STAGING = os.getenv('APP_STAGING', 'prod')
-WMTS_PUBLIC_HOST = os.getenv('WMTS_PUBLIC_HOST', 'wmts.geo.admin.ch')
 REFERER_URL = os.getenv('PROXYWMS_REFERER_URL', 'https://proxywms.geo.admin.ch')
 WMS_PORT = os.getenv('WMS_PORT', None)
 WMS_HOST = os.getenv('WMS_HOST', 'localhost')

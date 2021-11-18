@@ -13,10 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_wmts_path(version, layer_id, stylename, time, srid, address, extension):
-    return '%s.%s' % (
-        '/'.join([version, layer_id, stylename, time, str(srid), address]),
-        extension
-    )
+    path = '/'.join([version, layer_id, stylename, time, str(srid), address])
+    return f'{path}.{extension}'
 
 
 def validate_version(version):
