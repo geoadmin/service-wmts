@@ -21,7 +21,7 @@ def get_logging_cfg():
     print(f"LOGGING_CFG is {cfg_file}")
 
     config = {}
-    with open(cfg_file, 'rt') as fd:
+    with open(cfg_file, 'rt', encoding='utf-8') as fd:
         config = yaml.safe_load(path.expandvars(fd.read()))
 
     logger.debug('Load logging configuration from file %s', cfg_file)

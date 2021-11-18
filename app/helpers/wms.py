@@ -27,12 +27,12 @@ def get_wms_params(
         'SERVICE': 'WMS',
         'VERSION': '1.3.0',
         'REQUEST': 'GetMap',
-        'FORMAT': 'image/%s' % image_format,
+        'FORMAT': f'image/{image_format}',
         'TRANSPARENT': 'true' if image_format == 'png' else 'false',
         'LAYERS': layers,
-        'WIDTH': '%s' % (width + gutter * 2),
-        'HEIGHT': '%s' % (height + gutter * 2),
-        'CRS': 'EPSG:%s' % srid,
+        'WIDTH': f'{width + gutter * 2}',
+        'HEIGHT': f'{height + gutter * 2}',
+        'CRS': f'EPSG:{srid}',
         'STYLES': '',
         'TIME': time,
         'BBOX': ','.join([str(b) for b in bbox])
@@ -48,7 +48,7 @@ def get_wms_resource(
     logger.info(
         'Fetching: %s?%s',
         settings.WMS_BACKEND,
-        '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
+        '&'.join([f'{k}={v}' for k, v in params.items()])
     )
     return get_wms_image(settings.WMS_BACKEND, params)
 
@@ -102,7 +102,7 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
             content_type,
             extra={"wms_response": response.text}
         )
-        abort(501, 'Unable to process the request: %s' % response.content)
+        abort(501, f'Unable to process the request: {response.content}')
     headers = {}
     content = response.content
     if (
@@ -116,5 +116,5 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
             content = out.getvalue()
     headers['Content-Type'] = content_type
     etag = r_headers.get('Etag', digest(content))
-    headers['Etag'] = '"{}"'.format(etag)
+    headers['Etag'] = f'"{etag}"'
     return response.status_code, content, headers

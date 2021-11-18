@@ -58,7 +58,7 @@ def on_starting(server):
 if __name__ == '__main__':
     # Bind to 0.0.0.0 to let your app listen to all network interfaces.
     options = {
-        'bind': '%s:%s' % ('0.0.0.0', WMTS_PORT),
+        'bind': f'0.0.0.0:{WMTS_PORT}',
         'worker_class': 'gevent',
         'workers': WMTS_WORKERS,
         'timeout': 10,
