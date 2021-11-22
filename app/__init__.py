@@ -51,10 +51,13 @@ app.jinja_env.lstrip_blocks = True
 def add_cors_and_cache_header(response):
     # only override cache-control when not present in response
     if 'Cache-Control' not in response.headers:
-        if response.status_code == 200:
-            cache_control = settings.DEFAULT_CACHE
+        if request.endpoint == 'get_tile':
+            if response.status_code == 200:
+                cache_control = settings.GET_TILE_DEFAULT_CACHE
+            else:
+                cache_control = settings.GET_TILE_ERROR_DEFAULT_CACHE
         else:
-            cache_control = settings.NO_CACHE
+            cache_control = settings.GET_CAP_DEFAULT_CACHE
         response.headers.add('Cache-Control', cache_control)
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')

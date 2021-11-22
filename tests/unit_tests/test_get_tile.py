@@ -25,12 +25,26 @@ class InvalidRequestTests(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
 
+    def assertCacheControl(self, response):
+        self.assertIn(
+            'Cache-Control',
+            response.headers,
+            msg='Missing cache-control header in GetTile response.'
+        )
+        self.assertIn(
+            'max-age',
+            response.headers['Cache-Control'],
+            msg='Missing cache-control max-age directive '
+            'in GetTile response.'
+        )
+
     def test_wmts_bad_layer(self):
         resp = self.app.get(
             '/1.0.0/knickerbocker/default/current/21781/20/76/44.png'
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported Layer', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_bad_extension(self):
         resp = self.app.get(
@@ -38,6 +52,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported image format', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_bad_mode(self):
         resp = self.app.get(
@@ -45,6 +60,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported mode', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_bad_srid(self):
         resp = self.app.get(
@@ -52,6 +68,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported srid', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_invalid_time(self):
         resp = self.app.get(
@@ -59,6 +76,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Invalid time format', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_wrong_time(self):
         resp = self.app.get(
@@ -66,6 +84,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported timestamp', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_bad_version(self):
         resp = self.app.get(
@@ -73,6 +92,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported version', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_bad_stylename(self):
         resp = self.app.get(
@@ -80,6 +100,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported style name', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_unsupported_zoom(self):
         resp = self.app.get(
@@ -87,6 +108,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Unsupported zoom level', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_not_allowed_method(self):
         resp = self.app.post(
@@ -95,6 +117,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 405)
         self.assertIn('405 Method Not Allowed', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_out_of_bounds(self):
         resp = self.app.get(
@@ -102,6 +125,7 @@ class InvalidRequestTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Tile out of bounds', resp.get_data(as_text=True))
+        self.assertCacheControl(resp)
 
     def test_wmts_4326_unsupported_zoom(self):
         resp = self.app.get(
@@ -109,10 +133,7 @@ class InvalidRequestTests(unittest.TestCase):
             '?mode=preview'
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(
-            resp.headers['Cache-Control'],
-            'public, must-revalidate, proxy-revalidate, max-age=0'
-        )
+        self.assertCacheControl(resp)
 
 
 class GetTileRequestsTests(unittest.TestCase):
@@ -126,7 +147,9 @@ class GetTileRequestsTests(unittest.TestCase):
             '/1.0.0/inline_points/default/current/21781/20/76/44.png'
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=1800')
+        self.assertEqual(
+            resp.headers['Cache-Control'], 'public, max-age=5184000'
+        )
         self.assertEqual(resp.headers['Access-Control-Allow-Origin'], '*')
         self.assertEqual(
             resp.headers['Access-Control-Allow-Methods'], 'GET, HEAD, OPTIONS'
@@ -185,6 +208,34 @@ class GetTileRequestsTests(unittest.TestCase):
         )
 
     @requests_mock.Mocker()
+    def test_cache_control_header(self, mocker):
+        data = get_image_data()
+        mocker.get(
+            settings.WMS_BACKEND,
+            content=data,
+            headers={
+                'Content-Type': 'image/png', 'Content-Length': str(len(data))
+            }
+        )
+
+        resp = self.app.get(
+            '/1.0.0/inline_points/'
+            'default/current/4326/15/34136/7882.png'
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(
+            'Cache-Control',
+            resp.headers,
+            msg='Missing cache-control header in GetTile response.'
+        )
+        self.assertIn(
+            'max-age',
+            resp.headers['Cache-Control'],
+            msg='Missing cache-control max-age directive '
+            'in GetTile response.'
+        )
+
+    @requests_mock.Mocker()
     @patch('app.routes.put_s3_img')
     @patch('app.settings.ENABLE_S3_CACHING', True)
     def test_wmts_nodata_true(self, mocker, mock_put_s3_img):
@@ -205,7 +256,9 @@ class GetTileRequestsTests(unittest.TestCase):
         mock_put_s3_img.assert_called()
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data, b'OK')
-        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=1800')
+        self.assertEqual(
+            resp.headers['Cache-Control'], 'public, max-age=5184000'
+        )
 
     @requests_mock.Mocker()
     @patch('app.routes.put_s3_img')
@@ -293,10 +346,7 @@ class ErrorRequestsTests(unittest.TestCase):
 
         mock_wms_image.assert_called()
         self.assertEqual(resp.status_code, 408)
-        self.assertEqual(
-            resp.headers['Cache-Control'],
-            'public, must-revalidate, proxy-revalidate, max-age=0'
-        )
+        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=3600')
         self.assertIn('timed out', resp.get_data(as_text=True))
 
     @patch('app.helpers.wms.get_wms_image')
@@ -308,10 +358,7 @@ class ErrorRequestsTests(unittest.TestCase):
         )
         mock_wms_image.assert_called()
         self.assertEqual(resp.status_code, 502)
-        self.assertEqual(
-            resp.headers['Cache-Control'],
-            'public, must-revalidate, proxy-revalidate, max-age=0'
-        )
+        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=3600')
         self.assertIn('Bad Gateway', resp.get_data(as_text=True))
 
     @patch('app.helpers.wms.get_wms_image')
@@ -323,10 +370,7 @@ class ErrorRequestsTests(unittest.TestCase):
         )
         mock_wms_image.assert_called()
         self.assertEqual(resp.status_code, 502)
-        self.assertEqual(
-            resp.headers['Cache-Control'],
-            'public, must-revalidate, proxy-revalidate, max-age=0'
-        )
+        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=3600')
         self.assertIn('Unable to verify SSL', resp.get_data(as_text=True))
 
     @patch('app.helpers.wms.get_wms_image')
@@ -338,10 +382,7 @@ class ErrorRequestsTests(unittest.TestCase):
         )
         mock_wms_image.assert_called()
         self.assertEqual(resp.status_code, 500)
-        self.assertEqual(
-            resp.headers['Cache-Control'],
-            'public, must-revalidate, proxy-revalidate, max-age=0'
-        )
+        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=3600')
         self.assertIn(
             'Internal server error, please consult logs',
             resp.get_data(as_text=True)
@@ -361,7 +402,4 @@ class ErrorRequestsTests(unittest.TestCase):
             'default/current/21781/20/76/44.png?mode=preview'
         )
         self.assertEqual(resp.status_code, 501)
-        self.assertEqual(
-            resp.headers['Cache-Control'],
-            'public, must-revalidate, proxy-revalidate, max-age=0'
-        )
+        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=3600')
