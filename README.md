@@ -180,7 +180,10 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | LOGS_DIR | `./logs` | Logging output directory. Only used by local logging configuration file. |
 | DEFAULT_MODE | `default` | Default operation mode see [Operation Mode](#mode---operation-mode) |
 | UNITTEST_SKIP_XML_VALIDATION | `False` | Validating Get Capabilities XML output in Unittest takes time (~32s), therefore with this variable you can skip this test. |
-| DEFAULT_CACHE | `'public, max-age=1800'` | Default cache settings all requests. Note for GetTile this is overridden by the `cache_ttl` value from BOD. |
+| GET_TILE_DEFAULT_CACHE | `'public, max-age=5184000'` | Default cache settings for GetTile requests (default to 2 months). Note the `max-age` directive is usually overridden by the `cache_ttl` value from BOD. |
+| GET_TILE_ERROR_DEFAULT_CACHE | `'public, max-age=3600'` | Default cache settings for GetTile error responses (default to 1 hour). |
+| GET_TILE_CACHE_TEMPLATE | `'public, max-age={}'` | GetTile `cache-control` header template used with the `cache_ttl` value if present for the layer in the BOD. |
+| GET_CAP_DEFAULT_CACHE | `'public, max-age=5184000'` | GetCapabilities `cache-control` header value (default to 2 months). |
 | FORWARED_ALLOW_IPS | `*` | Sets the gunicorn `forwarded_allow_ips`. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#forwarded-allow-ips). This setting is required in order to `secure_scheme_headers` to work. |
 | FORWARDED_PROTO_HEADER_NAME | `X-Forwarded-Proto` | Sets gunicorn `secure_scheme_headers` parameter to `{${FORWARDED_PROTO_HEADER_NAME}: 'https'}`. This settings is required in order to generate correct URLs in the service responses. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#secure-scheme-headers). |
 | SCRIPT_NAME | `''` | If the service is behind a reverse proxy and not served at the root, the route prefix must be set in `SCRIPT_NAME`. |

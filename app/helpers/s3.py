@@ -93,7 +93,9 @@ def put_s3_img_async(wmts_path, content, headers):
             Bucket=settings.AWS_S3_BUCKET_NAME,
             Body=content,
             Key=wmts_path,
-            CacheControl=headers.get('Cache-Control', settings.DEFAULT_CACHE),
+            CacheControl=headers.get(
+                'Cache-Control', settings.GET_TILE_DEFAULT_CACHE
+            ),
             ContentLength=len(content),
             ContentType=headers.get('Content-Type', '')
         )

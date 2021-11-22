@@ -38,7 +38,18 @@ BOD_DB_PASSWD = os.environ['BOD_DB_PASSWD']
 BOD_DB_CONNECT_TIMEOUT = int(os.getenv('BOD_DB_CONNECT_TIMEOUT', '10'))
 BOD_DB_CONNECT_RETRIES = int(os.getenv('BOD_DB_CONNECT_RETRIES', '3'))
 NO_CACHE = 'public, must-revalidate, proxy-revalidate, max-age=0'
-DEFAULT_CACHE = os.getenv('DEFAULT_CACHE', 'public, max-age=1800')
+GET_TILE_DEFAULT_CACHE = os.getenv(
+    'GET_TILE_DEFAULT_CACHE', 'public, max-age=5184000'
+)
+GET_TILE_ERROR_DEFAULT_CACHE = os.getenv(
+    'GET_TILE_DEFAULT_CACHE', 'public, max-age=3600'
+)
+GET_TILE_CACHE_TEMPLATE = os.getenv(
+    'GET_TILE_CACHE_TEMPLATE', 'public, max-age={}'
+)
+GET_CAP_DEFAULT_CACHE = os.getenv(
+    'GET_CAP_DEFAULT_CACHE', 'public, max-age=5184000'
+)
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed
