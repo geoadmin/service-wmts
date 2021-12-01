@@ -44,6 +44,9 @@ GET_TILE_DEFAULT_CACHE = os.getenv(
 GET_TILE_ERROR_DEFAULT_CACHE = os.getenv(
     'GET_TILE_DEFAULT_CACHE', 'public, max-age=3600'
 )
+ERROR_5XX_DEFAULT_CACHE = os.getenv(
+    'ERROR_5XX_DEFAULT_CACHE', 'public, max-age=5'
+)
 GET_TILE_CACHE_TEMPLATE = os.getenv(
     'GET_TILE_CACHE_TEMPLATE', 'public, max-age={}'
 )
