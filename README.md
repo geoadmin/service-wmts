@@ -182,6 +182,7 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | UNITTEST_SKIP_XML_VALIDATION | `False` | Validating Get Capabilities XML output in Unittest takes time (~32s), therefore with this variable you can skip this test. |
 | GET_TILE_DEFAULT_CACHE | `'public, max-age=5184000'` | Default cache settings for GetTile requests (default to 2 months). Note the `max-age` directive is usually overridden by the `cache_ttl` value from BOD. |
 | GET_TILE_ERROR_DEFAULT_CACHE | `'public, max-age=3600'` | Default cache settings for GetTile error responses (default to 1 hour). |
+| ERROR_5XX_DEFAULT_CACHE | `public, max-age=3` | Default cache settings for 5xx HTTP errors |
 | GET_TILE_CACHE_TEMPLATE | `'public, max-age={}'` | GetTile `cache-control` header template used with the `cache_ttl` value if present for the layer in the BOD. |
 | GET_CAP_DEFAULT_CACHE | `'public, max-age=5184000'` | GetCapabilities `cache-control` header value (default to 2 months). |
 | FORWARED_ALLOW_IPS | `*` | Sets the gunicorn `forwarded_allow_ips`. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#forwarded-allow-ips). This setting is required in order to `secure_scheme_headers` to work. |
