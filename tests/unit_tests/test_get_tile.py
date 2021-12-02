@@ -142,6 +142,22 @@ class GetTileRequestsTests(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
 
+    def assertXTodHeaders(self, response):
+        self.assertIn('X-TOD-MapServer-Time', response.headers)
+        try:
+            self.assertGreater(
+                float(response.headers['X-TOD-MapServer-Time']), 0
+            )
+        except ValueError as err:
+            self.fail(f'Invalid value "{err}" for X-TOD-MapServer-Time header')
+        self.assertIn('X-TOD-Generation-Time', response.headers)
+        try:
+            self.assertGreater(
+                float(response.headers['X-TOD-Generation-Time']), 0
+            )
+        except ValueError as err:
+            self.fail(f'Invalid value "{err}" for X-TOD-Generation-Time header')
+
     def test_wmts_options_method(self):
         resp = self.app.options(
             '/1.0.0/inline_points/default/current/21781/20/76/44.png'
@@ -186,6 +202,9 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(img.width, 256)
         self.assertEqual(img.height, 256)
 
+        # Check proprietary timing headers
+        self.assertXTodHeaders(resp)
+
     @requests_mock.Mocker()
     def test_wmts_4326(self, mocker):
         data = get_image_data()
@@ -206,6 +225,8 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(
             resp.headers['Cache-Control'], 'public, max-age=31556952'
         )
+        # Check proprietary timing headers
+        self.assertXTodHeaders(resp)
 
     @requests_mock.Mocker()
     def test_cache_control_header(self, mocker):
