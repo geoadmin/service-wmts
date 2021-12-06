@@ -290,6 +290,7 @@ good-names=i,
            dictionary,
            id,
            assertCacheControl,
+           assertXWmtsHeaders,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,

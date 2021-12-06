@@ -23,7 +23,7 @@ def get_wmts_config_by_layer(layer_id):
 def connect_to_db():
     retries = settings.BOD_DB_CONNECT_RETRIES
     while True:
-        logger.info(
+        logger.debug(
             'Connecting to %s db on host %s',
             settings.BOD_DB_NAME,
             settings.BOD_DB_HOST
@@ -74,7 +74,7 @@ def get_wmts_config_from_db():
         raise
 
     total_records = cursor.rowcount
-    logger.info("Found %s records", total_records)
+    logger.info("Found %s tileset records for wmts config in DB", total_records)
 
     # iterate through table
     restrictions = {}
@@ -97,4 +97,4 @@ def init_wmts_config():
     global RESTRICTIONS  # pylint: disable=global-statement
     started = time.time()
     RESTRICTIONS = get_wmts_config_from_db()
-    logger.info('WMTS config initialized in %.3fs', time.time() - started)
+    logger.debug('WMTS config initialized in %.3fs', time.time() - started)
