@@ -117,6 +117,6 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
     headers['Content-Type'] = content_type
     etag = response.headers.get('Etag', digest(content))
     headers['Etag'] = f'"{etag}"'
-    headers['X-TOD-MapServer-Time'] = response.elapsed.total_seconds()
-    headers['X-TOD-Generation-Time'] = f'{perf_counter() - start:.6f}'
+    headers['X-WMS-Time'] = response.elapsed.total_seconds()
+    headers['X-Tile-Generation-Time'] = f'{perf_counter() - start:.6f}'
     return response.status_code, content, headers

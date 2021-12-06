@@ -142,21 +142,21 @@ class GetTileRequestsTests(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
 
-    def assertXTodHeaders(self, response):
-        self.assertIn('X-TOD-MapServer-Time', response.headers)
+    def assertXWmtsHeaders(self, response):
+        self.assertIn('X-WMS-Time', response.headers)
+        try:
+            self.assertGreater(float(response.headers['X-WMS-Time']), 0)
+        except ValueError as err:
+            self.fail(f'Invalid value "{err}" for X-WMS-Time header')
+        self.assertIn('X-Tile-Generation-Time', response.headers)
         try:
             self.assertGreater(
-                float(response.headers['X-TOD-MapServer-Time']), 0
+                float(response.headers['X-Tile-Generation-Time']), 0
             )
         except ValueError as err:
-            self.fail(f'Invalid value "{err}" for X-TOD-MapServer-Time header')
-        self.assertIn('X-TOD-Generation-Time', response.headers)
-        try:
-            self.assertGreater(
-                float(response.headers['X-TOD-Generation-Time']), 0
+            self.fail(
+                f'Invalid value "{err}" for X-Tile-Generation-Time header'
             )
-        except ValueError as err:
-            self.fail(f'Invalid value "{err}" for X-TOD-Generation-Time header')
 
     def test_wmts_options_method(self):
         resp = self.app.options(
@@ -203,7 +203,7 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(img.height, 256)
 
         # Check proprietary timing headers
-        self.assertXTodHeaders(resp)
+        self.assertXWmtsHeaders(resp)
 
     @requests_mock.Mocker()
     def test_wmts_4326(self, mocker):
@@ -226,7 +226,7 @@ class GetTileRequestsTests(unittest.TestCase):
             resp.headers['Cache-Control'], 'public, max-age=31556952'
         )
         # Check proprietary timing headers
-        self.assertXTodHeaders(resp)
+        self.assertXWmtsHeaders(resp)
 
     @requests_mock.Mocker()
     def test_cache_control_header(self, mocker):
