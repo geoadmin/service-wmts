@@ -47,7 +47,7 @@ def get_wms_resource(
         bbox, image_format, srid, layers, gutter, timestamp, width, height
     )
     logger.info(
-        'Fetching: %s?%s',
+        'Fetching wms image: %s?%s',
         settings.WMS_BACKEND,
         '&'.join([f'{k}={v}' for k, v in params.items()])
     )

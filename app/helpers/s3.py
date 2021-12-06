@@ -45,7 +45,7 @@ def get_s3_img(wmts_path, check_expiration=False):
     http_client = None
     response = None
     content = None
-    logger.debug('Get tile from S3 %s', wmts_path)
+    logger.debug('Get tile %s from S3', wmts_path)
     try:
         http_client = http.client.HTTPConnection(settings.AWS_BUCKET_HOST)
         http_client.request("GET", "/" + wmts_path)
@@ -55,10 +55,12 @@ def get_s3_img(wmts_path, check_expiration=False):
             h_exp = response.getheader('x-amz-expiration')
             if check_expiration and h_exp is not None:
                 if not is_still_valid_tile(h_exp, datetime.now()):
-                    logger.info('invalidated tile on S3: %s', wmts_path)
+                    logger.info(
+                        'Tile %s on S3 has expired on %s !', wmts_path, h_exp
+                    )
                     return None
         else:
-            logger.debug('No tile for %s on S3 found', wmts_path)
+            logger.debug('No tile %s on S3 found', wmts_path)
             return None
     except http.client.HTTPException as error:
         logger.error(

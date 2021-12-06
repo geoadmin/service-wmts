@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 @app.before_request
 def log_request():
     g.setdefault('started', _time.time())
-    logger.info("%s %s", request.method, request.path)
+    logger.debug("%s %s", request.method, request.path)
 
 
 @app.after_request
@@ -155,9 +155,9 @@ def get_tile(
             if settings.ENABLE_S3_CACHING:
                 put_s3_img(content, wmts_path, headers)
             else:
-                logger.info('S3 caching is disabled')
+                logger.debug('S3 caching is disabled')
         else:
-            logger.info('Skipping insert')
+            logger.debug('Skipping insert')
 
         if etag_to_check == headers.get('Etag'):
             content, status_code = ('', 304)
