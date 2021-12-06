@@ -55,18 +55,11 @@ def get_wms_resource(
 
 
 def get_wms_image(wms_url, params):
-    my_headers = {'Referer': settings.REFERER_URL}
-    return req_session.get(
-        wms_url, params=params, headers=my_headers, verify=False
-    )
+    return req_session.get(wms_url, params=params)
 
 
 def get_wms_backend_root():
-    response = req_session.get(
-        settings.WMS_BACKEND,
-        headers={'Referer': settings.REFERER_URL},
-        verify=False
-    )
+    response = req_session.get(settings.WMS_BACKEND)
     return response.content
 
 

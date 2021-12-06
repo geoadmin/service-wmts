@@ -196,7 +196,6 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 |---|---|---|
 | WMS_HOST  | `localhost` | Host name of the WMS service |
 | WMS_PORT  | `80`   | Port of the WMS service |
-| REFERER_URL | `https://proxywms.geo.admin.ch` | Referer header to use with the WMS backend |
 | BOD_DB_HOST | | WMS Postgresql database hostname |
 | BOD_DB_PORT | `5432` | WMS Postgresql database port |
 | BOD_DB_NAME | | WMS database name |

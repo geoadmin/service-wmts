@@ -26,7 +26,6 @@ if WMTS_WORKERS <= 0:
     from multiprocessing import cpu_count
     WMTS_WORKERS = (cpu_count() * 2) + 1
 APP_STAGING = os.getenv('APP_STAGING', 'prod')
-REFERER_URL = os.getenv('PROXYWMS_REFERER_URL', 'https://proxywms.geo.admin.ch')
 WMS_PORT = os.getenv('WMS_PORT', None)
 WMS_HOST = os.getenv('WMS_HOST', 'localhost')
 WMS_BACKEND = f'http://{WMS_HOST}{":" + WMS_PORT if WMS_PORT else ""}/mapserv'
