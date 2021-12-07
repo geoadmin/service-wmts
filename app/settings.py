@@ -52,6 +52,9 @@ GET_TILE_CACHE_TEMPLATE = os.getenv(
 GET_CAP_DEFAULT_CACHE = os.getenv(
     'GET_CAP_DEFAULT_CACHE', 'public, max-age=5184000'
 )
+CHECKER_DEFAULT_CACHE = os.getenv(
+    'CHECKER_DEFAULT_CACHE', 'public, max-age=120'
+)
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed

@@ -185,6 +185,7 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | ERROR_5XX_DEFAULT_CACHE | `public, max-age=3` | Default cache settings for 5xx HTTP errors |
 | GET_TILE_CACHE_TEMPLATE | `'public, max-age={}'` | GetTile `cache-control` header template used with the `cache_ttl` value if present for the layer in the BOD. |
 | GET_CAP_DEFAULT_CACHE | `'public, max-age=5184000'` | GetCapabilities `cache-control` header value (default to 2 months). |
+| CHECKER_DEFAULT_CACHE | `'public, max-age=120'` | Checker `cache-control` header value (default to 2 minutes) |
 | FORWARED_ALLOW_IPS | `*` | Sets the gunicorn `forwarded_allow_ips`. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#forwarded-allow-ips). This setting is required in order to `secure_scheme_headers` to work. |
 | FORWARDED_PROTO_HEADER_NAME | `X-Forwarded-Proto` | Sets gunicorn `secure_scheme_headers` parameter to `{${FORWARDED_PROTO_HEADER_NAME}: 'https'}`. This settings is required in order to generate correct URLs in the service responses. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#secure-scheme-headers). |
 | SCRIPT_NAME | `''` | If the service is behind a reverse proxy and not served at the root, the route prefix must be set in `SCRIPT_NAME`. |
