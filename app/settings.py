@@ -25,6 +25,7 @@ WMTS_WORKERS = int(os.getenv('WORKERS', '0'))
 if WMTS_WORKERS <= 0:
     from multiprocessing import cpu_count
     WMTS_WORKERS = (cpu_count() * 2) + 1
+WSGI_TIMEOUT = int(os.getenv('WSGI_TIMEOUT', '45'))
 APP_STAGING = os.getenv('APP_STAGING', 'prod')
 WMS_PORT = os.getenv('WMS_PORT', None)
 WMS_HOST = os.getenv('WMS_HOST', 'localhost')
