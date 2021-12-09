@@ -10,6 +10,7 @@ from pyproj import transform
 from flask import jsonify
 from flask import make_response
 
+from app.settings import GET_TILE_BROWSER_CACHE_MAX_TTL
 from app.settings import GET_TILE_CACHE_TEMPLATE
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,13 @@ def is_still_valid_tile(exp_header, current_time):
 def set_cache_control(headers, restriction):
     cache_ttl = restriction.get('cache_ttl')
     if cache_ttl:
-        headers['Cache-Control'] = GET_TILE_CACHE_TEMPLATE.format(cache_ttl)
+        headers['Cache-Control'] = GET_TILE_CACHE_TEMPLATE.format(
+            cf_cache_ttl=cache_ttl,
+            browser_cache_ttl=(
+                cache_ttl if cache_ttl < GET_TILE_BROWSER_CACHE_MAX_TTL else
+                GET_TILE_BROWSER_CACHE_MAX_TTL
+            )
+        )
     return headers
 
 
