@@ -14,6 +14,59 @@ from app.models import GetCapThemesDe
 from app.models import ServiceMetadataDe
 
 
+def mock_request(
+    get_layers_capabilities_mock, get_themes_mock, get_metadata_mock
+):
+    capabilities = [
+        GetCapDe(
+            id='test-layer-1',
+            id_geocat=str(uuid4()),
+            staging='prod',
+            short_description='This is a layer for unittest',
+            abstract='Abstract of test layer',
+            formats=['png', 'jpg'],
+            timestamps=['current', '20090101'],
+            resolution_max=0.5,
+            topics=['api', 'ech'],
+            has_legend=True
+        ),
+        GetCapDe(
+            id='test-layer-2',
+            id_geocat=str(uuid4()),
+            staging='prod',
+            short_description='This is a layer for unittest',
+            abstract='Abstract of test layer',
+            formats=['png', 'jpg'],
+            timestamps=['current', '20090101'],
+            resolution_max=0.5,
+            topics=['api', 'ech'],
+            has_legend=True
+        ),
+    ]
+    get_layers_capabilities_mock.return_value = capabilities
+    get_themes_mock.return_value = [
+        GetCapThemesDe(
+            id="1",
+            inspire_name="Sub theme",
+            inspire_abstract="Sub theme",
+            inspire_upper_theme_name="Main theme",
+            inspire_upper_theme_abstract="Main theme",
+            inspire_upper_theme_id="dcf0cad08fc749baa39453bb22e1a6f4",
+            fk_dataset_ids=['test-layer-1', 'test-layer-2']
+        )
+    ]
+    get_metadata_mock.return_value = ServiceMetadataDe(
+        id=1,
+        pk_map_name="wmts-bgdi",
+        title="WMTS BGDI",
+        abstract=None,
+        keywords="Switzerland,OGC,Web Map Service",
+        fee="Open source",
+        access_constraint="Sign up",
+        name="swisstopo"
+    )
+
+
 class GetCapabilitiesTest(unittest.TestCase):
 
     def setUp(self):
@@ -100,53 +153,8 @@ class GetCapabilitiesTest(unittest.TestCase):
         print('Parsing XML schema, please wait this takes a while...')
         schema = etree.XMLSchema(schema_doc)
         parser = etree.XMLParser(schema=schema)
-        capabilities = [
-            GetCapDe(
-                id='test-layer-1',
-                id_geocat=str(uuid4()),
-                staging='prod',
-                short_description='This is a layer for unittest',
-                abstract='Abstract of test layer',
-                formats=['png', 'jpg'],
-                timestamps=['current', '20090101'],
-                resolution_max=0.5,
-                topics=['api', 'ech'],
-                has_legend=True
-            ),
-            GetCapDe(
-                id='test-layer-2',
-                id_geocat=str(uuid4()),
-                staging='prod',
-                short_description='This is a layer for unittest',
-                abstract='Abstract of test layer',
-                formats=['png', 'jpg'],
-                timestamps=['current', '20090101'],
-                resolution_max=0.5,
-                topics=['api', 'ech'],
-                has_legend=True
-            ),
-        ]
-        get_layers_capabilities_mock.return_value = capabilities
-        get_themes_mock.return_value = [
-            GetCapThemesDe(
-                id="1",
-                inspire_name="Sub theme",
-                inspire_abstract="Sub theme",
-                inspire_upper_theme_name="Main theme",
-                inspire_upper_theme_abstract="Main theme",
-                inspire_upper_theme_id="dcf0cad08fc749baa39453bb22e1a6f4",
-                fk_dataset_ids=['test-layer-1', 'test-layer-2']
-            )
-        ]
-        get_metadata_mock.return_value = ServiceMetadataDe(
-            id=1,
-            pk_map_name="wmts-bgdi",
-            title="WMTS BGDI",
-            abstract=None,
-            keywords="Switzerland,OGC,Web Map Service",
-            fee="Open source",
-            access_constraint="Sign up",
-            name="swisstopo"
+        mock_request(
+            get_layers_capabilities_mock, get_themes_mock, get_metadata_mock
         )
         response = self.client.get(
             url_for('get_capabilities_4', version='1.0.0')
@@ -157,3 +165,28 @@ class GetCapabilitiesTest(unittest.TestCase):
             etree.fromstring(response.data, parser)
         except (etree.XMLSyntaxError) as error:
             self.fail(f'Invalid WMTSCapabilities.xml: {error}')
+
+    @patch('app.views.GetCapabilities.get_layers_capabilities')
+    @patch('app.views.GetCapabilities.get_themes')
+    @patch('app.views.GetCapabilities.get_metadata')
+    def test_get_capabilities_cache_control(
+        self, get_metadata_mock, get_themes_mock, get_layers_capabilities_mock
+    ):
+        mock_request(
+            get_layers_capabilities_mock, get_themes_mock, get_metadata_mock
+        )
+        response = self.client.get(
+            url_for('get_capabilities_4', version='1.0.0')
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'Cache-Control',
+            response.headers,
+            msg='Missing cache-control header in GetCapabilities response.'
+        )
+        self.assertIn(
+            'max-age',
+            response.headers['Cache-Control'],
+            msg='Missing cache-control max-age directive '
+            'in GetCapabilities response.'
+        )

@@ -10,6 +10,9 @@ from pyproj import transform
 from flask import jsonify
 from flask import make_response
 
+from app.settings import GET_TILE_BROWSER_CACHE_MAX_TTL
+from app.settings import GET_TILE_CACHE_TEMPLATE
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,8 +38,8 @@ def extend_bbox(bbox, shift):
 
 
 def re_project_bbox(bbox, srid_to, srid_from=2056):
-    srid_in = Proj('+init=EPSG:%s' % srid_from)
-    srid_out = Proj('+init=EPSG:%s' % srid_to)
+    srid_in = Proj(f'+init=EPSG:{srid_from}')
+    srid_out = Proj(f'+init=EPSG:{srid_to}')
     p_left = transform(srid_in, srid_out, bbox[0], bbox[1])
     p_right = transform(srid_in, srid_out, bbox[2], bbox[3])
     return p_left + p_right
@@ -64,7 +67,13 @@ def is_still_valid_tile(exp_header, current_time):
 def set_cache_control(headers, restriction):
     cache_ttl = restriction.get('cache_ttl')
     if cache_ttl:
-        headers['Cache-Control'] = f'public, max-age={cache_ttl}'
+        headers['Cache-Control'] = GET_TILE_CACHE_TEMPLATE.format(
+            cf_cache_ttl=cache_ttl,
+            browser_cache_ttl=(
+                cache_ttl if cache_ttl < GET_TILE_BROWSER_CACHE_MAX_TTL else
+                GET_TILE_BROWSER_CACHE_MAX_TTL
+            )
+        )
     return headers
 
 

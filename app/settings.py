@@ -16,9 +16,17 @@ if ENV_FILE and Path(ENV_FILE).exists():
 # LOGGING_CFG = os.getenv('LOGGING_CFG')
 # LOGS_DIR = os.getenv('LOGS_DIR')
 TRAP_HTTP_EXCEPTIONS = True
+WMTS_PORT = str(os.environ.get('WMTS_PORT', "9000"))
+FORWARED_ALLOW_IPS = os.getenv('FORWARED_ALLOW_IPS', '*')
+FORWARDED_PROTO_HEADER_NAME = os.getenv(
+    'FORWARDED_PROTO_HEADER_NAME', 'X-Forwarded-Proto'
+).upper()
+WMTS_WORKERS = int(os.getenv('WORKERS', '0'))
+if WMTS_WORKERS <= 0:
+    from multiprocessing import cpu_count
+    WMTS_WORKERS = (cpu_count() * 2) + 1
+WSGI_TIMEOUT = int(os.getenv('WSGI_TIMEOUT', '45'))
 APP_STAGING = os.getenv('APP_STAGING', 'prod')
-WMTS_PUBLIC_HOST = os.getenv('WMTS_PUBLIC_HOST', 'wmts.geo.admin.ch')
-REFERER_URL = os.getenv('PROXYWMS_REFERER_URL', 'https://proxywms.geo.admin.ch')
 WMS_PORT = os.getenv('WMS_PORT', None)
 WMS_HOST = os.getenv('WMS_HOST', 'localhost')
 WMS_BACKEND = f'http://{WMS_HOST}{":" + WMS_PORT if WMS_PORT else ""}/mapserv'
@@ -29,8 +37,33 @@ BOD_DB_USER = os.environ['BOD_DB_USER']
 BOD_DB_PASSWD = os.environ['BOD_DB_PASSWD']
 BOD_DB_CONNECT_TIMEOUT = int(os.getenv('BOD_DB_CONNECT_TIMEOUT', '10'))
 BOD_DB_CONNECT_RETRIES = int(os.getenv('BOD_DB_CONNECT_RETRIES', '3'))
+
+# Cache settings
 NO_CACHE = 'public, must-revalidate, proxy-revalidate, max-age=0'
-DEFAULT_CACHE = os.getenv('DEFAULT_CACHE', 'public, max-age=1800')
+GET_TILE_BROWSER_CACHE_MAX_TTL = int(
+    os.getenv('GET_TILE_BROWSER_CACHE_MAX_TTL', '3600')
+)
+GET_TILE_DEFAULT_CACHE = os.getenv(
+    'GET_TILE_DEFAULT_CACHE',
+    'public, max-age={browser_cache_ttl}, s-maxage=5184000'
+).format(browser_cache_ttl=GET_TILE_BROWSER_CACHE_MAX_TTL)
+GET_TILE_ERROR_DEFAULT_CACHE = os.getenv(
+    'GET_TILE_DEFAULT_CACHE', 'public, max-age=3600'
+)
+ERROR_5XX_DEFAULT_CACHE = os.getenv(
+    'ERROR_5XX_DEFAULT_CACHE', 'public, max-age=5'
+)
+GET_TILE_CACHE_TEMPLATE = os.getenv(
+    'GET_TILE_CACHE_TEMPLATE',
+    'public, max-age={browser_cache_ttl}, s-maxage={cf_cache_ttl}'
+)
+GET_CAP_DEFAULT_CACHE = os.getenv(
+    'GET_CAP_DEFAULT_CACHE', 'public, max-age=3600, s-maxage=5184000'
+)
+CHECKER_DEFAULT_CACHE = os.getenv(
+    'CHECKER_DEFAULT_CACHE', 'public, max-age=120'
+)
+
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed

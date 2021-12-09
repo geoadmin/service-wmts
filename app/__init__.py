@@ -11,7 +11,6 @@ from app import settings
 from app.helpers.celery import make_celery
 from app.helpers.utils import get_closest_zoom
 from app.helpers.utils import make_error_msg
-from app.middleware import ReverseProxy
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +25,6 @@ app.config.from_object('app.settings')
 
 # Setup the DB
 db = SQLAlchemy(app)
-
-app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed
 celery = make_celery(app)
@@ -53,11 +50,16 @@ app.jinja_env.lstrip_blocks = True
 @app.after_request
 def add_cors_and_cache_header(response):
     # only override cache-control when not present in response
-    if not response.headers.get('Cache-Control'):
-        if response.status_code == 200:
-            cache_control = settings.DEFAULT_CACHE
+    if 'Cache-Control' not in response.headers:
+        if response.status_code >= 500:
+            cache_control = settings.ERROR_5XX_DEFAULT_CACHE
+        elif request.endpoint == 'get_tile':
+            if response.status_code == 200:
+                cache_control = settings.GET_TILE_DEFAULT_CACHE
+            else:
+                cache_control = settings.GET_TILE_ERROR_DEFAULT_CACHE
         else:
-            cache_control = settings.NO_CACHE
+            cache_control = settings.GET_CAP_DEFAULT_CACHE
         response.headers.add('Cache-Control', cache_control)
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')

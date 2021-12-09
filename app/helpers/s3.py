@@ -45,7 +45,7 @@ def get_s3_img(wmts_path, check_expiration=False):
     http_client = None
     response = None
     content = None
-    logger.debug('Get tile from S3 %s', wmts_path)
+    logger.debug('Get tile %s from S3', wmts_path)
     try:
         http_client = http.client.HTTPConnection(settings.AWS_BUCKET_HOST)
         http_client.request("GET", "/" + wmts_path)
@@ -55,10 +55,12 @@ def get_s3_img(wmts_path, check_expiration=False):
             h_exp = response.getheader('x-amz-expiration')
             if check_expiration and h_exp is not None:
                 if not is_still_valid_tile(h_exp, datetime.now()):
-                    logger.info('invalidated tile on S3: %s', wmts_path)
+                    logger.info(
+                        'Tile %s on S3 has expired on %s !', wmts_path, h_exp
+                    )
                     return None
         else:
-            logger.debug('No tile for %s on S3 found', wmts_path)
+            logger.debug('No tile %s on S3 found', wmts_path)
             return None
     except http.client.HTTPException as error:
         logger.error(
@@ -75,8 +77,15 @@ def get_s3_img(wmts_path, check_expiration=False):
 
 
 def put_s3_img(content, wmts_path, headers):
-    logger.info('Inserting tile %s in S3 asynchronously', wmts_path)
-    put_s3_img_async.apply_async(args=[wmts_path, content, headers])
+    logger.debug('Inserting tile %s in S3 asynchronously', wmts_path)
+    put_s3_img_async.apply_async(
+        args=[
+            wmts_path,
+            content,
+            headers.get('Cache-Control', settings.GET_TILE_DEFAULT_CACHE),
+            headers.get('Content-Type', '')
+        ]
+    )
 
 
 '''
@@ -86,22 +95,22 @@ s3_client = get_s3_client()
 
 
 @celery.task(ignore_result=True)
-def put_s3_img_async(wmts_path, content, headers):
-    task_logger.info('Celery task for caching %s', wmts_path)
+def put_s3_img_async(wmts_path, content, cache_control, content_type):
+    task_logger.info(
+        'Adding tile %s to S3 with Cache-control="%s" and Content-Type="%s"',
+        wmts_path
+    )
     try:
         s3_client.put_object(
             Bucket=settings.AWS_S3_BUCKET_NAME,
             Body=content,
             Key=wmts_path,
-            CacheControl=headers.get('Cache-Control', settings.DEFAULT_CACHE),
+            CacheControl=cache_control,
             ContentLength=len(content),
-            ContentType=headers.get('Content-Type', '')
+            ContentType=content_type
         )
     except BaseException as error:
         task_logger.critical(
-            'Celery task for caching %s failed: %s',
-            wmts_path,
-            error,
-            exc_info=True
+            'Failed to save tile %s on S3: %s', wmts_path, error, exc_info=True
         )
         raise

@@ -13,10 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_wmts_path(version, layer_id, stylename, time, srid, address, extension):
-    return '%s.%s' % (
-        '/'.join([version, layer_id, stylename, time, str(srid), address]),
-        extension
-    )
+    path = '/'.join([version, layer_id, stylename, time, str(srid), address])
+    return f'{path}.{extension}'
 
 
 def validate_version(version):
@@ -170,14 +168,14 @@ def handle_wmts_modes(mode, wmts_path):
     s3_object = None
 
     if mode == 'debug' and settings.ENABLE_S3_CACHING:
-        logger.info('Fetching object from S3 %s...', wmts_path)
+        logger.debug('Fetching object from S3 %s...', wmts_path)
         s3_object = get_s3_img(wmts_path)
     elif mode == 'debug' and not settings.ENABLE_S3_CACHING:
         logger.error(
             'Debug mode is not available when ENABLE_S3_CACHING is disabled'
         )
     elif mode == 'check_expiration' and settings.ENABLE_S3_CACHING:
-        logger.info('checking expiration of S3 object %s...', wmts_path)
+        logger.debug('checking expiration of S3 object %s...', wmts_path)
         s3_object = get_s3_img(wmts_path, check_expiration=True)
     elif mode == 'check_expiration' and not settings.ENABLE_S3_CACHING:
         logger.error(

@@ -1,5 +1,6 @@
 import io
 import logging
+from time import perf_counter
 
 import requests
 import requests.exceptions
@@ -21,62 +22,54 @@ req_session.mount('https://', requests.adapters.HTTPAdapter(max_retries=0))
 
 
 def get_wms_params(
-    bbox, image_format, srid, layers, gutter, time, width=256, height=256
+    bbox, image_format, srid, layers, gutter, timestamp, width=256, height=256
 ):
     return {
         'SERVICE': 'WMS',
         'VERSION': '1.3.0',
         'REQUEST': 'GetMap',
-        'FORMAT': 'image/%s' % image_format,
+        'FORMAT': f'image/{image_format}',
         'TRANSPARENT': 'true' if image_format == 'png' else 'false',
         'LAYERS': layers,
-        'WIDTH': '%s' % (width + gutter * 2),
-        'HEIGHT': '%s' % (height + gutter * 2),
-        'CRS': 'EPSG:%s' % srid,
+        'WIDTH': f'{width + gutter * 2}',
+        'HEIGHT': f'{height + gutter * 2}',
+        'CRS': f'EPSG:{srid}',
         'STYLES': '',
-        'TIME': time,
+        'TIME': timestamp,
         'BBOX': ','.join([str(b) for b in bbox])
     }
 
 
 def get_wms_resource(
-    bbox, image_format, srid, layers, gutter, time, width=256, height=256
+    bbox, image_format, srid, layers, gutter, timestamp, width=256, height=256
 ):
     params = get_wms_params(
-        bbox, image_format, srid, layers, gutter, time, width, height
+        bbox, image_format, srid, layers, gutter, timestamp, width, height
     )
     logger.info(
-        'Fetching: %s?%s',
+        'Fetching wms image: %s?%s',
         settings.WMS_BACKEND,
-        '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
+        '&'.join([f'{k}={v}' for k, v in params.items()])
     )
     return get_wms_image(settings.WMS_BACKEND, params)
 
 
 def get_wms_image(wms_url, params):
-    my_headers = {'Referer': settings.REFERER_URL}
-
-    return req_session.get(
-        wms_url, params=params, headers=my_headers, verify=False
-    )
+    return req_session.get(wms_url, params=params)
 
 
 def get_wms_backend_root():
-    response = req_session.get(
-        settings.WMS_BACKEND,
-        headers={'Referer': settings.REFERER_URL},
-        verify=False
-    )
+    response = req_session.get(settings.WMS_BACKEND)
     return response.content
 
 
-def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
+def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
     try:
+        start = perf_counter()
         response = get_wms_resource(
-            bbox, extension, srid, layer_id, gutter, time
+            bbox, extension, srid, layer_id, gutter, timestamp
         )
-        r_headers = response.headers
-        content_type = r_headers.get('Content-Type', 'text/xml')
+        content_type = response.headers.get('Content-Type', 'text/xml')
         logger.debug(
             'WMS response %s; content-type: %s, content: %s',
             response.status_code,
@@ -102,7 +95,7 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
             content_type,
             extra={"wms_response": response.text}
         )
-        abort(501, 'Unable to process the request: %s' % response.content)
+        abort(501, f'Unable to process the request: {response.content}')
     headers = {}
     content = response.content
     if (
@@ -115,6 +108,8 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, time):
             img.save(out, format='PNG')
             content = out.getvalue()
     headers['Content-Type'] = content_type
-    etag = r_headers.get('Etag', digest(content))
-    headers['Etag'] = '"{}"'.format(etag)
+    etag = response.headers.get('Etag', digest(content))
+    headers['Etag'] = f'"{etag}"'
+    headers['X-WMS-Time'] = response.elapsed.total_seconds()
+    headers['X-Tile-Generation-Time'] = f'{perf_counter() - start:.6f}'
     return response.status_code, content, headers
