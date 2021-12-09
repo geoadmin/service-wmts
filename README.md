@@ -18,6 +18,7 @@
   - [Linting and formatting your work](#linting-and-formatting-your-work)
 - [Service configuration](#service-configuration)
   - [General configuration](#general-configuration)
+  - [Cache Configuration](#cache-configuration)
   - [WMS configuration](#wms-configuration)
   - [S3 2nd level caching settings](#s3-2nd-level-caching-settings)
   - [Get Capabilities settings](#get-capabilities-settings)
@@ -180,15 +181,25 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | LOGS_DIR | `./logs` | Logging output directory. Only used by local logging configuration file. |
 | DEFAULT_MODE | `default` | Default operation mode see [Operation Mode](#mode---operation-mode) |
 | UNITTEST_SKIP_XML_VALIDATION | `False` | Validating Get Capabilities XML output in Unittest takes time (~32s), therefore with this variable you can skip this test. |
-| GET_TILE_DEFAULT_CACHE | `'public, max-age=5184000'` | Default cache settings for GetTile requests (default to 2 months). Note the `max-age` directive is usually overridden by the `cache_ttl` value from BOD. |
-| GET_TILE_ERROR_DEFAULT_CACHE | `'public, max-age=3600'` | Default cache settings for GetTile error responses (default to 1 hour). |
-| ERROR_5XX_DEFAULT_CACHE | `public, max-age=3` | Default cache settings for 5xx HTTP errors |
-| GET_TILE_CACHE_TEMPLATE | `'public, max-age={}'` | GetTile `cache-control` header template used with the `cache_ttl` value if present for the layer in the BOD. |
-| GET_CAP_DEFAULT_CACHE | `'public, max-age=5184000'` | GetCapabilities `cache-control` header value (default to 2 months). |
 | FORWARED_ALLOW_IPS | `*` | Sets the gunicorn `forwarded_allow_ips`. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#forwarded-allow-ips). This setting is required in order to `secure_scheme_headers` to work. |
 | FORWARDED_PROTO_HEADER_NAME | `X-Forwarded-Proto` | Sets gunicorn `secure_scheme_headers` parameter to `{${FORWARDED_PROTO_HEADER_NAME}: 'https'}`. This settings is required in order to generate correct URLs in the service responses. See [Gunicorn Doc](https://docs.gunicorn.org/en/stable/settings.html#secure-scheme-headers). |
 | SCRIPT_NAME | `''` | If the service is behind a reverse proxy and not served at the root, the route prefix must be set in `SCRIPT_NAME`. |
 | WMTS_WORKERS | `0` | WMTS service number of workers. 0 or negative value means that the number of worker are computed from the number of cpu. |
+| WSGI_TIMEOUT | `45`| WSGI timeout. |
+
+### Cache Configuration
+
+NOTE: `max-age` is usually used by the Browser, while `s-maxage` by the server cache (e.g. CloudFront cache, see [CloudFront - Managing how long content stays in the cache (expiration)](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html)).
+
+| Variable | Default | Description |
+|---|---|---|
+| GET_TILE_DEFAULT_CACHE | `'public, max-age={browser_cache_ttl}, s-maxage=5184000'` | Default cache settings for GetTile requests (default to 2 months). `browser_cache_ttl` is set to `GET_TILE_BROWSER_CACHE_MAX_TTL`. Note the `s-maxage` directive is usually overridden by the `cache_ttl` value from BOD. |
+| GET_TILE_ERROR_DEFAULT_CACHE | `'public, max-age=3600'` | Default cache settings for GetTile error responses (default to 1 hour). |
+| ERROR_5XX_DEFAULT_CACHE | `public, max-age=5` | Default cache settings for 5xx HTTP errors |
+| GET_TILE_CACHE_TEMPLATE | `'public, max-age={browser_cache_ttl}, s-maxage={cf_cache_ttl}'` | GetTile `cache-control` header template used with the `cache_ttl` value if present for the layer in the BOD. The `browser_cache_ttl` value will be set `cache_ttl` or to the `GET_TILE_BROWSER_CACHE_MAX_TTL` value if the later is bigger. |
+| GET_TILE_BROWSER_CACHE_MAX_TTL | `3600` | Maximum value used for the GetTile Cache-Control max-age header in case of `cache_ttl` configured in BOD. |
+| GET_CAP_DEFAULT_CACHE | `'public, max-age=3600, s-maxage=5184000'` | GetCapabilities `cache-control` header value (default to 2 months). |
+| CHECKER_DEFAULT_CACHE | `'public, max-age=120'` | Checker `cache-control` header value (default to 2 minutes) |
 
 ### WMS configuration
 

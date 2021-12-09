@@ -58,11 +58,13 @@ def log_response(response):
 
 @app.route('/checker', methods=['GET'])
 def check():
-    return make_response(
+    response = make_response(
         jsonify({
             'success': True, 'message': 'OK', 'version': APP_VERSION
         })
     )
+    response.headers['Cache-Control'] = settings.CHECKER_DEFAULT_CACHE
+    return response
 
 
 @app.route('/info.json')

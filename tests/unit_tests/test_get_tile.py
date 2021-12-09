@@ -164,7 +164,8 @@ class GetTileRequestsTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            resp.headers['Cache-Control'], 'public, max-age=5184000'
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=5184000'
         )
         self.assertEqual(resp.headers['Access-Control-Allow-Origin'], '*')
         self.assertEqual(
@@ -194,7 +195,8 @@ class GetTileRequestsTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            resp.headers['Cache-Control'], 'public, max-age=31556952'
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=31556952'
         )
         # Image must be cropped
         self.assertNotEqual(resp.data, data)
@@ -223,7 +225,8 @@ class GetTileRequestsTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            resp.headers['Cache-Control'], 'public, max-age=31556952'
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=31556952'
         )
         # Check proprietary timing headers
         self.assertXWmtsHeaders(resp)
@@ -278,7 +281,8 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data, b'OK')
         self.assertEqual(
-            resp.headers['Cache-Control'], 'public, max-age=5184000'
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=5184000'
         )
 
     @requests_mock.Mocker()
@@ -303,7 +307,8 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertNotEqual(resp.data, b'OK')
         self.assertEqual(
-            resp.headers['Cache-Control'], 'public, max-age=31556952'
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=31556952'
         )
 
     @requests_mock.Mocker()
@@ -346,7 +351,8 @@ class GetTileRequestsTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
-            resp.headers['Cache-Control'], 'public, max-age=31556952'
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=31556952'
         )
         mock_put_s3_img.assert_called()
 
