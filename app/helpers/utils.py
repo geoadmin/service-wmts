@@ -45,13 +45,6 @@ def re_project_bbox(bbox, srid_to, srid_from=2056):
     return p_left + p_right
 
 
-def tile_address(grid, zoom, col, row):
-    return grid.tileAddressTemplate \
-        .replace('{zoom}', str(zoom)) \
-        .replace('{tileCol}', str(col)) \
-        .replace('{tileRow}', str(row))
-
-
 def digest(data):
     return hashlib.md5(data).hexdigest()
 

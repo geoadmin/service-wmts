@@ -1,7 +1,6 @@
 import unittest
 from datetime import datetime
 
-from gatilegrid import getTileGrid
 from PIL import Image
 from werkzeug import exceptions
 
@@ -9,10 +8,7 @@ from app import app
 from app.helpers.utils import crop_image
 from app.helpers.utils import extend_bbox
 from app.helpers.utils import is_still_valid_tile
-from app.helpers.utils import tile_address
 from app.helpers.wms import get_wms_params
-from app.helpers.wmts import get_wmts_path
-from app.helpers.wmts import prepare_wmts_cached_response
 from app.views import GetCapabilities
 
 
@@ -48,41 +44,6 @@ class FunctionalGetTileTests(unittest.TestCase):
         self.assertEqual(bbox_extended[2], 30)
         self.assertEqual(bbox_extended[3], 30)
 
-    def test_tile_address(self):
-        grid_2056 = getTileGrid(2056)()
-        grid_21781 = getTileGrid(21781)()
-
-        z = 20  # pylint: disable=invalid-name
-        col = 44
-        row = 76
-
-        ad_2056 = tile_address(grid_2056, z, col, row)
-        ad_21781 = tile_address(grid_21781, z, col, row)
-
-        self.assertEqual(ad_2056, '20/44/76')
-        self.assertEqual(ad_21781, '20/76/44')
-
-    def test_get_wmts_path(self):
-        z = 20  # pylint: disable=invalid-name
-        col = 44
-        row = 76
-        srid = 2056
-        grid = getTileGrid(srid)()
-
-        version = '1.0.0'
-        layer_id = 'ch.dummy'
-        stylename = 'default'
-        time = 'current'
-        address = tile_address(grid, z, col, row)
-        extension = 'png'
-
-        wmts_path = get_wmts_path(
-            version, layer_id, stylename, time, srid, address, extension
-        )
-        self.assertEqual(
-            wmts_path, '1.0.0/ch.dummy/default/current/2056/20/44/76.png'
-        )
-
     def test_get_wms_params(self):
         bbox = [1.0, 1.0, 5.0, 5.0]
         srid = 2056
@@ -111,38 +72,6 @@ class FunctionalGetTileTests(unittest.TestCase):
         )
         self.assertEqual(wms_params['TRANSPARENT'], 'false')
         self.assertEqual(wms_params['FORMAT'], 'image/jpeg')
-
-    def test_perpare_wmts_response(self):
-
-        with open('tests/sample/gutter_image.png', 'rb') as fd:
-            headers = {'content-type': 'image/png'}
-            mock_resp = MockResponse(headers)
-            content = fd.read()
-            code_txt, headers = prepare_wmts_cached_response(mock_resp, content)
-
-        self.assertEqual(code_txt, '200')
-        self.assertEqual(type(content), bytes)
-        self.assertEqual(headers.get('Content-Length'), 9829)
-        self.assertEqual(headers.get('Content-Type'), 'image/png')
-        self.assertNotIn('Content-Encoding', headers)
-
-        # Python: image are read as bytes
-        with open('tests/sample/gutter_image.png', 'rb') as fd:
-            headers = {
-                'content-type': 'image/png',
-                'content-length': 2000,
-                'content-encoding': 'gzip'
-            }
-            mock_response = MockResponse(headers)
-            data = fd.read()
-            (code_txt,
-             headers) = prepare_wmts_cached_response(mock_response, data)
-
-        self.assertEqual(code_txt, '200')
-        self.assertEqual(type(content), bytes)
-        self.assertEqual(headers.get('Content-Length'), 2000)
-        self.assertEqual(headers.get('Content-Type'), 'image/png')
-        self.assertEqual(headers.get('Content-Encoding'), 'gzip')
 
     def test_valid_tile_with_headers(self):
         headers = """expiry-date="Tue, 8 May 2018 00:00:00 GMT",

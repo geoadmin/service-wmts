@@ -1,7 +1,7 @@
 # TODO CLEAN_UP: remove it if S3 cache is not needed anymore
-import http
+import http.client
 import logging
-from datetime import datetime
+from time import perf_counter
 
 import boto3
 from botocore.client import Config
@@ -9,10 +9,17 @@ from celery.utils.log import get_task_logger
 
 from app import celery
 from app import settings
-from app.helpers.utils import is_still_valid_tile
 
 logger = logging.getLogger(__name__)
 task_logger = get_task_logger(__name__)
+
+
+def _get_s3_base_path():
+    if settings.AWS_S3_ENDPOINT_URL:
+        # When working locally with minio as S3, the bucket name must be part
+        # of the path.
+        return f'{settings.AWS_S3_BUCKET_NAME}/'
+    return ''
 
 
 def get_s3_client():
@@ -30,61 +37,117 @@ def get_s3_client():
     )
 
 
-def get_s3_img(wmts_path, check_expiration=False):
-    '''Get an image from S3
+def get_s3_file(wmts_path, etag=None):
+    '''Get a file from S3
 
     Args:
         wmts_path: str
-            WMTS path correspond to the S3 key
-        check_expiration: bool
-            Check image cache expiration
+            Path correspond to the S3 key
+        etag: str | None
+            ETag to pass as If-None-Match header
 
     Returns:
-        Image or None if the image is expired or not found
+        S3 object or None if the file is not found or any other errors happened
     '''
     http_client = None
     response = None
-    content = None
-    logger.debug('Get tile %s from S3', wmts_path)
+    headers = {}
+    if etag:
+        headers['If-None-Match'] = etag
+
     try:
-        http_client = http.client.HTTPConnection(settings.AWS_BUCKET_HOST)
-        http_client.request("GET", "/" + wmts_path)
+        path = f"/{_get_s3_base_path()}{wmts_path}"
+        logger.debug('Get file from S3: %s/%s', settings.AWS_BUCKET_HOST, path)
+        http_client = http.client.HTTPConnection(
+            settings.AWS_BUCKET_HOST, timeout=1
+        )
+        http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
-        if int(response.status) in (200, 304):
-            content = response.read()
-            h_exp = response.getheader('x-amz-expiration')
-            if check_expiration and h_exp is not None:
-                if not is_still_valid_tile(h_exp, datetime.now()):
-                    logger.info(
-                        'Tile %s on S3 has expired on %s !', wmts_path, h_exp
-                    )
-                    return None
-        else:
-            logger.debug('No tile %s on S3 found', wmts_path)
-            return None
+        if response.status in (200, 304):
+            logger.debug('File %s found on S3', wmts_path)
+            return response, response.read()
+        if response.status in (404, 403):
+            # Note depending on S3 configuration, it might return a 403 when an
+            # object is not found. Also in this case we don't read the content
+            # as we don't need it.
+            logger.debug(
+                'S3 file %s not found: status_code=%d %s',
+                wmts_path,
+                response.status,
+                response.reason
+            )
+            return None, None
     except http.client.HTTPException as error:
         logger.error(
-            'Failed to retrieved tile %s from S3: %s',
-            wmts_path,
-            error,
-            exc_info=True
+            'Failed to get S3 file %s: %s', wmts_path, error, exc_info=True
         )
-        return None
+        return None, None
     finally:
         if http_client:
             http_client.close()
-    return (response, content)
+    logger.error(
+        'Failed to get S3 file %s: status_code=%d %s, headers=%s, body=%s',
+        wmts_path,
+        response.status,
+        response.reason,
+        response.getheaders(),
+        response.read()
+    )
+    return None, None
 
 
-def put_s3_img(content, wmts_path, headers):
+def put_s3_file_async(content, wmts_path, headers):
+    '''Put a file on S3 asynchronously
+
+    This method returns directly an the file is uploaded to S3 in an
+    asyncrhone Celery task
+
+    Args:
+        content: str
+            File content
+        wmts_path: str
+            S3 key to use (usually the wmts path)
+        headers: dict
+            header to set with the S3 object
+    '''
     logger.debug('Inserting tile %s in S3 asynchronously', wmts_path)
-    put_s3_img_async.apply_async(
+    started = perf_counter()
+    put_s3_file_async_task.apply_async(
         args=[
             wmts_path,
             content,
             headers.get('Cache-Control', settings.GET_TILE_DEFAULT_CACHE),
-            headers.get('Content-Type', '')
+            headers['Content-Type']
         ]
+    )
+    logger.debug(
+        'Put tile async task in %.2f ms', (perf_counter() - started) * 1000
+    )
+
+
+def put_s3_file(content, wmts_path, headers):
+    '''Put a file on S3 synchronously
+
+    This method upload the file to S3
+
+    Args:
+        content: str
+            File content
+        wmts_path: str
+            S3 key to use (usually the wmts path)
+        headers: dict
+            header to set with the S3 object
+    '''
+    logger.debug('Inserting tile %s in S3 synchronously', wmts_path)
+    started = perf_counter()
+    put_s3_file_async_task(
+        wmts_path,
+        content,
+        headers.get('Cache-Control', settings.GET_TILE_DEFAULT_CACHE),
+        headers['Content-Type']
+    )
+    logger.debug(
+        'Put tile sync task in %.2f ms', (perf_counter() - started) * 1000
     )
 
 
@@ -94,13 +157,16 @@ S3 client used by the async task.
 s3_client = get_s3_client()
 
 
-@celery.task(ignore_result=True)
-def put_s3_img_async(wmts_path, content, cache_control, content_type):
+@celery.task()
+def put_s3_file_async_task(wmts_path, content, cache_control, content_type):
     task_logger.info(
         'Adding tile %s to S3 with Cache-control="%s" and Content-Type="%s"',
-        wmts_path
+        wmts_path,
+        cache_control,
+        content_type
     )
     try:
+        started = perf_counter()
         s3_client.put_object(
             Bucket=settings.AWS_S3_BUCKET_NAME,
             Body=content,
@@ -108,6 +174,9 @@ def put_s3_img_async(wmts_path, content, cache_control, content_type):
             CacheControl=cache_control,
             ContentLength=len(content),
             ContentType=content_type
+        )
+        task_logger.debug(
+            'Write file in S3 in %.2f ms', (perf_counter() - started) * 1000
         )
     except BaseException as error:
         task_logger.critical(

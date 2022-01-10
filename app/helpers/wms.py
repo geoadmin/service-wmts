@@ -1,24 +1,16 @@
-import io
 import logging
-from time import perf_counter
 
 import requests
 import requests.exceptions
-from PIL import Image
 
 from flask import abort
 
 from app import settings
-from app.helpers.utils import crop_image
-from app.helpers.utils import digest
 
 logger = logging.getLogger(__name__)
 
 req_session = requests.Session()
 req_session.mount('http://', requests.adapters.HTTPAdapter(max_retries=0))
-# TODO CLEAN_UP remove the https session which might not be needed if only
-# internally served.
-req_session.mount('https://', requests.adapters.HTTPAdapter(max_retries=0))
 
 
 def get_wms_params(
@@ -63,9 +55,8 @@ def get_wms_backend_root():
     return response.content
 
 
-def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
+def get_wms_tile(bbox, extension, srid, layer_id, gutter, timestamp):
     try:
-        start = perf_counter()
         response = get_wms_resource(
             bbox, extension, srid, layer_id, gutter, timestamp
         )
@@ -86,7 +77,6 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
         logger.error(error, exc_info=True)
         abort(502, 'Bad Gateway')
 
-    # Optimize images
     # Detect/Create transparent images
     if 'text/xml' in content_type:
         logger.error(
@@ -96,20 +86,5 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
             extra={"wms_response": response.text}
         )
         abort(501, f'Unable to process the request: {response.content}')
-    headers = {}
-    content = response.content
-    if (
-        response.ok and response.content and content_type == 'image/png' and
-        extension == 'png' and gutter > 0
-    ):
-        with Image.open(io.BytesIO(content)) as img:
-            img = crop_image(img, gutter)
-            out = io.BytesIO()
-            img.save(out, format='PNG')
-            content = out.getvalue()
-    headers['Content-Type'] = content_type
-    etag = response.headers.get('Etag', digest(content))
-    headers['Etag'] = f'"{etag}"'
-    headers['X-WMS-Time'] = response.elapsed.total_seconds()
-    headers['X-Tile-Generation-Time'] = f'{perf_counter() - start:.6f}'
-    return response.status_code, content, headers
+
+    return response

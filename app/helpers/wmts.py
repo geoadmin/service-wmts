@@ -1,20 +1,25 @@
+import io
 import logging
+from time import perf_counter
 
 from gatilegrid import getTileGrid
+from PIL import Image
 
 from flask import abort
 from flask import request
 
 from app import settings
-from app.helpers.s3 import get_s3_img
+from app.helpers.s3 import put_s3_file
+from app.helpers.s3 import put_s3_file_async
+from app.helpers.utils import crop_image
+from app.helpers.utils import digest
+from app.helpers.utils import extend_bbox
+from app.helpers.utils import get_image_format
+from app.helpers.utils import set_cache_control
+from app.helpers.wms import get_wms_tile
 from app.helpers.wmts_config import get_wmts_config_by_layer
 
 logger = logging.getLogger(__name__)
-
-
-def get_wmts_path(version, layer_id, stylename, time, srid, address, extension):
-    path = '/'.join([version, layer_id, stylename, time, str(srid), address])
-    return f'{path}.{extension}'
 
 
 def validate_version(version):
@@ -40,18 +45,21 @@ def validate_lang(lang):
         abort(400, f'Unsupported lang {lang}, must be on of {languages}')
 
 
-def prepare_wmts_cached_response(resp, content):
-    headers = {}
-    headers['Content-Type'] = resp.getheader('content-type')
-    c_length = resp.getheader('content-length')
-    if not c_length:
-        c_length = len(content)
-    headers['Content-Length'] = c_length
-    c_encoding = resp.getheader('content-encoding')
-    if c_encoding:
-        headers['Content-Encoding'] = c_encoding
+def prepare_wmts_cached_response(s3_resp):
+    headers = dict(s3_resp.getheaders())
+    headers['X-2nd-Cache'] = 'hit'
 
-    return '200', headers
+    return s3_resp.status, headers
+
+
+def validate_wmts_mode():
+    mode = request.args.get('mode', settings.DEFAULT_MODE)
+    supported_modes = ('default', 'preview')
+    if mode not in supported_modes:
+        msg = 'Unsupported mode: %s. Only "%s" are supported.'
+        logger.error(msg, mode, ", ".join(supported_modes))
+        abort(400, msg % (mode, ", ".join(supported_modes)))
+    return mode
 
 
 def validate_wmts_request(
@@ -76,13 +84,6 @@ def validate_wmts_request(
         logger.error(msg, extension, ", ".join(supported_image_formats))
         abort(400, msg % (extension, ", ".join(supported_image_formats)))
 
-    mode = request.args.get('mode', settings.DEFAULT_MODE)
-    supported_modes = ('default', 'debug', 'preview', 'check_expiration')
-    if mode not in supported_modes:
-        msg = 'Unsupported mode: %s. Only "%s" are supported.'
-        logger.error(msg, mode, ", ".join(supported_modes))
-        abort(400, msg % (mode, ", ".join(supported_modes)))
-
     if srid == 21781:
         row, col = col, row
 
@@ -104,7 +105,7 @@ def validate_wmts_request(
         logger.error('Tile %d/%d/%d out of bbox %s', zoom, row, col, bbox)
         abort(400, f'Tile out of bounds {zoom}/{row}/{col}')
 
-    return mode, gagrid, bbox
+    return gagrid, bbox
 
 
 def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
@@ -164,23 +165,113 @@ def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
     return restriction, gutter, write_s3
 
 
-def handle_wmts_modes(mode, wmts_path):
-    s3_object = None
+def get_optmize_tile(bbox, extension, srid, layer_id, gutter, timestamp):
+    start = perf_counter()
+    response = get_wms_tile(bbox, extension, srid, layer_id, gutter, timestamp)
+    content_type = response.headers['Content-Type']
 
-    if mode == 'debug' and settings.ENABLE_S3_CACHING:
-        logger.debug('Fetching object from S3 %s...', wmts_path)
-        s3_object = get_s3_img(wmts_path)
-    elif mode == 'debug' and not settings.ENABLE_S3_CACHING:
-        logger.error(
-            'Debug mode is not available when ENABLE_S3_CACHING is disabled'
-        )
-    elif mode == 'check_expiration' and settings.ENABLE_S3_CACHING:
-        logger.debug('checking expiration of S3 object %s...', wmts_path)
-        s3_object = get_s3_img(wmts_path, check_expiration=True)
-    elif mode == 'check_expiration' and not settings.ENABLE_S3_CACHING:
-        logger.error(
-            'check_expiration mode is not available when ENABLE_S3_CACHING is '
-            'disabled'
-        )
+    # Optimize images
+    content = response.content
+    if (
+        response.ok and response.content and content_type == 'image/png' and
+        extension == 'png' and gutter > 0
+    ):
+        logger.debug('Cropping tile to gutter %d', gutter)
+        with Image.open(io.BytesIO(content)) as img:
+            img = crop_image(img, gutter)
+            out = io.BytesIO()
+            img.save(out, format='PNG')
+            content = out.getvalue()
+    tile_generation_time = perf_counter() - start
+    return (
+        response.status_code,
+        content,
+        response.headers,
+        response.elapsed.total_seconds(),
+        tile_generation_time
+    )
 
-    return s3_object
+
+def prepare_wmts_headers(
+    content, headers, wms_time, tile_generation_time, restriction
+):
+    _headers = {'X-2nd-Cache': 'miss'}
+    _headers['Content-Type'] = headers['Content-Type']
+    etag = headers.get('Etag', None)
+    if etag is None:
+        etag = digest(content)
+    _headers['Etag'] = f'"{etag}"'
+    _headers['X-WMS-Time'] = wms_time
+    _headers['X-Tile-Generation-Time'] = f'{tile_generation_time:.6f}'
+    set_cache_control(_headers, restriction)
+    return _headers
+
+
+def handle_2nd_level_cache(write_s3, mode, headers, content):
+    # TODO remove the S3_WRITE_MODE when the migration has been done.
+    on_close = None
+    ctype_ok = headers.get('Content-Type') in ('image/png', 'image/jpeg')
+    if (
+        write_s3 and mode != "preview" and ctype_ok and
+        settings.ENABLE_S3_CACHING
+    ):
+        # cache layer in s3
+        if settings.S3_WRITE_MODE == 'async':
+            put_s3_file_async(content, request.path, headers)
+        if settings.S3_WRITE_MODE == 'on_close':
+            wmts_path = request.path
+
+            def on_close_handler():
+                put_s3_file(content, wmts_path, headers)
+
+            on_close = on_close_handler
+        else:
+            put_s3_file(content, request.path, headers)
+
+    elif not settings.ENABLE_S3_CACHING:
+        logger.debug('S3 caching is disabled')
+    else:
+        logger.debug('Skipping insert')
+
+    return on_close
+
+
+def prepare_wmts_response(
+    version,
+    layer_id,
+    style_name,
+    time,
+    srid,
+    zoom,
+    col,
+    row,
+    extension,
+    mode,
+    etag
+):
+    # pylint: disable=too-many-locals
+    gagrid, bbox = validate_wmts_request(
+        version, style_name, time, srid, zoom, col, row, extension
+    )
+    restriction, gutter, write_s3 = validate_restriction(
+        layer_id, time, extension, gagrid, zoom, srid
+    )
+    image_format = get_image_format(extension)
+
+    shift = gagrid.RESOLUTIONS[zoom] * gutter
+    bbox = extend_bbox(bbox, shift)
+    if srid == 4326:
+        bbox = [bbox[1], bbox[0], bbox[3], bbox[2]]
+
+    (status_code, content, headers, wms_time, tile_generation_time
+    ) = get_optmize_tile(bbox, image_format, srid, layer_id, gutter, time)
+    headers = prepare_wmts_headers(
+        content, headers, wms_time, tile_generation_time, restriction
+    )
+
+    on_close = handle_2nd_level_cache(write_s3, mode, headers, content)
+
+    if etag == headers.get('Etag'):
+        return 304, None, headers, None
+
+    return status_code, content, headers, on_close
