@@ -47,7 +47,7 @@ def validate_lang(lang):
 
 def prepare_wmts_cached_response(s3_resp):
     headers = dict(s3_resp.getheaders())
-    headers['X-2nd-Cache'] = 'hit'
+    headers['X-Tiles-S3-Cache'] = 'hit'
 
     return s3_resp.status, headers
 
@@ -218,7 +218,7 @@ def get_optimized_tile(bbox, gutter):
 def prepare_wmts_headers(
     content, headers, wms_time, tile_generation_time, restriction
 ):
-    _headers = {'X-2nd-Cache': 'miss'}
+    _headers = {'X-Tiles-S3-Cache': 'miss'}
     _headers['Content-Type'] = headers['Content-Type']
     etag = headers.get('Etag', None)
     if etag is None:

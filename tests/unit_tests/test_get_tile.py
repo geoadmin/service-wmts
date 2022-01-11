@@ -191,9 +191,10 @@ class GetTileRequestsBaseTests(unittest.TestCase):
             )
 
     def assert2ndCacheHeader(self, response, cache_hit):
-        self.assertIn('X-2nd-Cache', response.headers)
+        self.assertIn('X-Tiles-S3-Cache', response.headers)
         self.assertEqual(
-            response.headers['X-2nd-Cache'], 'hit' if cache_hit else 'miss'
+            response.headers['X-Tiles-S3-Cache'],
+            'hit' if cache_hit else 'miss'
         )
 
 
