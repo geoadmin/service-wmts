@@ -5,6 +5,7 @@ from time import perf_counter
 
 import boto3
 from botocore.client import Config
+import botocore.exceptions
 from celery.utils.log import get_task_logger
 
 from app import celery
@@ -59,7 +60,7 @@ def get_s3_file(wmts_path, etag=None):
         path = f"/{_get_s3_base_path()}{wmts_path}"
         logger.debug('Get file from S3: %s/%s', settings.AWS_BUCKET_HOST, path)
         http_client = http.client.HTTPConnection(
-            settings.AWS_BUCKET_HOST, timeout=1
+            settings.AWS_BUCKET_HOST, timeout=0.5
         )
         http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
@@ -140,7 +141,8 @@ def put_s3_file(content, wmts_path, headers):
     '''
     logger.debug('Inserting tile %s in S3 synchronously', wmts_path)
     started = perf_counter()
-    put_s3_file_async_task(
+    _write_to_s3(
+        logger,
         wmts_path,
         content,
         headers.get('Cache-Control', settings.GET_TILE_DEFAULT_CACHE),
@@ -149,6 +151,33 @@ def put_s3_file(content, wmts_path, headers):
     logger.debug(
         'Put tile sync task in %.2f ms', (perf_counter() - started) * 1000
     )
+
+
+def _write_to_s3(
+    _logger, key, content, cache_control, content_type, raise_error=False
+):
+    try:
+        started = perf_counter()
+        s3_client.put_object(
+            Bucket=settings.AWS_S3_BUCKET_NAME,
+            Body=content,
+            Key=key,
+            CacheControl=cache_control,
+            ContentLength=len(content),
+            ContentType=content_type
+        )
+        _logger.debug(
+            'Written file to S3 in %.2f ms', (perf_counter() - started) * 1000
+        )
+    except (
+        botocore.exceptions.ConnectionError,
+        botocore.exceptions.HTTPClientError
+    ) as error:
+        _logger.error(
+            'Failed to write file %s on S3: %s', key, error, exc_info=True
+        )
+        if raise_error:
+            raise error
 
 
 '''
@@ -166,20 +195,16 @@ def put_s3_file_async_task(wmts_path, content, cache_control, content_type):
         content_type
     )
     try:
-        started = perf_counter()
-        s3_client.put_object(
-            Bucket=settings.AWS_S3_BUCKET_NAME,
-            Body=content,
-            Key=wmts_path,
-            CacheControl=cache_control,
-            ContentLength=len(content),
-            ContentType=content_type
-        )
-        task_logger.debug(
-            'Write file in S3 in %.2f ms', (perf_counter() - started) * 1000
+        _write_to_s3(
+            task_logger,
+            wmts_path,
+            content,
+            cache_control,
+            content_type,
+            raise_error=True
         )
     except BaseException as error:
         task_logger.critical(
             'Failed to save tile %s on S3: %s', wmts_path, error, exc_info=True
         )
-        raise
+        raise error
