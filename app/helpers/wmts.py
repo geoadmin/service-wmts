@@ -239,6 +239,10 @@ def handle_2nd_level_cache(write_s3, mode, headers, content):
         settings.ENABLE_S3_CACHING
     ):
         # cache layer in s3
+        # add a custom header to track request that performed a write to S3
+        # this will be useful for performance tests
+        headers['X-Tiles-S3-Cache-Write'] = 'write tile to S3 cache'
+
         if settings.S3_WRITE_MODE == 'async':
             put_s3_file_async(content, request.path, headers)
         elif settings.S3_WRITE_MODE == 'on_close':
