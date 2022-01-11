@@ -1,11 +1,13 @@
 # TODO CLEAN_UP: remove it if S3 cache is not needed anymore
+import hashlib
 import http.client
 import logging
+from base64 import b64encode
 from time import perf_counter
 
 import boto3
-from botocore.client import Config
 import botocore.exceptions
+from botocore.client import Config
 from celery.utils.log import get_task_logger
 
 from app import celery
@@ -156,6 +158,7 @@ def put_s3_file(content, wmts_path, headers):
 def _write_to_s3(
     _logger, key, content, cache_control, content_type, raise_error=False
 ):
+    md5 = b64encode(hashlib.md5(content).digest()).decode('utf-8')
     try:
         started = perf_counter()
         s3_client.put_object(
@@ -164,14 +167,16 @@ def _write_to_s3(
             Key=key,
             CacheControl=cache_control,
             ContentLength=len(content),
-            ContentType=content_type
+            ContentType=content_type,
+            ContentMD5=md5
         )
         _logger.debug(
             'Written file to S3 in %.2f ms', (perf_counter() - started) * 1000
         )
     except (
         botocore.exceptions.ConnectionError,
-        botocore.exceptions.HTTPClientError
+        botocore.exceptions.HTTPClientError,
+        botocore.exceptions.ChecksumError
     ) as error:
         _logger.error(
             'Failed to write file %s on S3: %s', key, error, exc_info=True
