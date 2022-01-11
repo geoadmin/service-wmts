@@ -10,7 +10,6 @@ from flask import request
 
 from app import settings
 from app.helpers.s3 import put_s3_file
-from app.helpers.s3 import put_s3_file_async
 from app.helpers.utils import crop_image
 from app.helpers.utils import digest
 from app.helpers.utils import extend_bbox
@@ -231,32 +230,20 @@ def prepare_wmts_headers(
 
 
 def handle_2nd_level_cache(write_s3, mode, headers, content):
-    # TODO remove the S3_WRITE_MODE when the migration has been done.
     on_close = None
     ctype_ok = headers.get('Content-Type') in ('image/png', 'image/jpeg')
-    if (
-        write_s3 and mode != "preview" and ctype_ok and
-        settings.ENABLE_S3_CACHING
-    ):
+    if write_s3 and mode != "preview" and ctype_ok:
         # cache layer in s3
         # add a custom header to track request that performed a write to S3
         # this will be useful for performance tests
         headers['X-Tiles-S3-Cache-Write'] = 'write tile to S3 cache'
 
-        if settings.S3_WRITE_MODE == 'async':
-            put_s3_file_async(content, request.path, headers)
-        elif settings.S3_WRITE_MODE == 'on_close':
-            wmts_path = request.path
+        wmts_path = request.path
 
-            def on_close_handler():
-                put_s3_file(content, wmts_path, headers)
+        def on_close_handler():
+            put_s3_file(content, wmts_path, headers)
 
-            on_close = on_close_handler
-        else:
-            put_s3_file(content, request.path, headers)
-
-    elif not settings.ENABLE_S3_CACHING:
-        logger.debug('S3 caching is disabled')
+        on_close = on_close_handler
     else:
         logger.debug('Skipping insert')
 

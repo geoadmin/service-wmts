@@ -67,19 +67,6 @@ CHECKER_DEFAULT_CACHE = os.getenv(
 
 DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')
 
-# TODO CLEAN_UP: remove S3 second level caching if not needed
-ENABLE_S3_CACHING = strtobool(os.getenv('ENABLE_S3_CACHING', 'False'))
-# S3_WRITE_MODE can be;
-#  - on_close := done after the request has been sent
-#  - async := done asynchronously using Celery/rabbitmq stack
-#  - sync := done synchronously during the request handling
-S3_WRITE_MODE = os.getenv('S3_WRITE_MODE', 'on_close')
-# Celery and Rabbitmq settings
-RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
-RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', '5672'))
-CELERY_TASK_SERIALIZER = 'pickle'
-CELERY_ACCEPT_CONTENT = ['pickle']
-
 # AWS Settings
 # this endpoint url is only used for local development
 AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', None)

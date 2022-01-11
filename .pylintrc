@@ -292,6 +292,7 @@ good-names=i,
            assertCacheControl,
            assertXWmtsHeaders,
            assert2ndCacheHeader,
+           assertMock,
            _
 
 # Good variable names regexes, separated by a comma. If names match any regex,
