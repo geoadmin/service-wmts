@@ -165,23 +165,28 @@ def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
     return restriction, gutter, write_s3
 
 
-def get_optmize_tile(bbox, extension, srid, layer_id, gutter, timestamp):
+def optimize_image(content, gutter):
+    logger.debug('Cropping tile to gutter %d', gutter)
+    with Image.open(io.BytesIO(content)) as img:
+        img = crop_image(img, gutter)
+        out = io.BytesIO()
+        img.save(out, format='PNG')
+        content = out.getvalue()
+    return content
+
+
+def get_optimized_tile(bbox, extension, srid, layer_id, gutter, timestamp):
     start = perf_counter()
     response = get_wms_tile(bbox, extension, srid, layer_id, gutter, timestamp)
-    content_type = response.headers['Content-Type']
 
-    # Optimize images
+    # Optimize images if needed
     content = response.content
+    content_type = response.headers['Content-Type']
     if (
         response.ok and response.content and content_type == 'image/png' and
         extension == 'png' and gutter > 0
     ):
-        logger.debug('Cropping tile to gutter %d', gutter)
-        with Image.open(io.BytesIO(content)) as img:
-            img = crop_image(img, gutter)
-            out = io.BytesIO()
-            img.save(out, format='PNG')
-            content = out.getvalue()
+        content = optimize_image(content, gutter)
     tile_generation_time = perf_counter() - start
     return (
         response.status_code,
@@ -264,7 +269,7 @@ def prepare_wmts_response(
         bbox = [bbox[1], bbox[0], bbox[3], bbox[2]]
 
     (status_code, content, headers, wms_time, tile_generation_time
-    ) = get_optmize_tile(bbox, image_format, srid, layer_id, gutter, time)
+    ) = get_optimized_tile(bbox, image_format, srid, layer_id, gutter, time)
     headers = prepare_wmts_headers(
         content, headers, wms_time, tile_generation_time, restriction
     )

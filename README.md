@@ -281,7 +281,7 @@ Note the Tile will be put into 2nd level S3 cache if needed.
 
 ### S3 2nd level caching
 
-Because some tiles are very slow to generates; up to 30 seconds, those ones are also cached into a 2nd level cache on S3.
+Because some tiles are very slow to generates; up to 30 seconds, those ones are also cached into a 2nd level cache on S3. Tiles are saved on S3 based on the BOD configuration; `s3_resolution_max`.
 This cache is more deterministic as any other CDN cache (e.g. CloudFront cache).
 
 

@@ -9,6 +9,7 @@ from pyproj import transform
 
 from flask import jsonify
 from flask import make_response
+from flask import request
 
 from app.settings import GET_TILE_BROWSER_CACHE_MAX_TTL
 from app.settings import GET_TILE_CACHE_TEMPLATE
@@ -76,6 +77,9 @@ def get_image_format(extension):
     # remove it
     if extension == 'pngjpeg':
         image_format = 'png'
+        logger.warning(
+            'Extension pngjpeg hack detected for tile  %s', request.path
+        )
     return image_format
 
 
