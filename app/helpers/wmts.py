@@ -14,7 +14,6 @@ from app.helpers.s3 import put_s3_file_async
 from app.helpers.utils import crop_image
 from app.helpers.utils import digest
 from app.helpers.utils import extend_bbox
-from app.helpers.utils import get_image_format
 from app.helpers.utils import set_cache_control
 from app.helpers.wms import get_wms_tile
 from app.helpers.wmts_config import get_wmts_config_by_layer
@@ -22,8 +21,9 @@ from app.helpers.wmts_config import get_wmts_config_by_layer
 logger = logging.getLogger(__name__)
 
 
-def validate_version(version):
-    if version != '1.0.0':
+def validate_version():
+    if request.view_args['version'] != '1.0.0':
+        version = request.view_args['version']
         msg = 'Unsupported version: %s. Only "1.0.0" is supported.'
         logger.error(msg, version)
         abort(400, msg % (version))
@@ -62,28 +62,40 @@ def validate_wmts_mode():
     return mode
 
 
-def validate_wmts_request(
-    version, style_name, time, srid, zoom, col, row, extension
-):
-    validate_version(version)
+def validate_wmts_request():
+    validate_version()
 
-    if not (time.isdigit() or time in ('default', 'current')):
+    time_value = request.view_args['time']
+    if not (time_value.isdigit() or time_value in ('default', 'current')):
         msg = 'Invalid time format: %s. Must be "current", "default" ' \
               'or an integer'
-        logger.error(msg, time)
-        abort(400, msg % (time))
+        logger.error(msg, time_value)
+        abort(400, msg % (time_value))
 
-    if style_name != 'default':
+    if request.view_args['style_name'] != 'default':
         msg = 'Unsupported style name: %s. Only "default" is supported.'
-        logger.error(msg, style_name)
-        abort(400, msg % (style_name))
+        logger.error(msg, request.view_args['style_name'])
+        abort(400, msg % (request.view_args['style_name']))
 
     supported_image_formats = ('png', 'jpeg', 'pngjpeg')
-    if extension not in supported_image_formats:
+    if request.view_args['extension'] not in supported_image_formats:
         msg = 'Unsupported image format: %s. Only "%s" are supported.'
-        logger.error(msg, extension, ", ".join(supported_image_formats))
-        abort(400, msg % (extension, ", ".join(supported_image_formats)))
+        logger.error(
+            msg,
+            request.view_args['extension'],
+            ", ".join(supported_image_formats)
+        )
+        abort(
+            400,
+            msg % (
+                request.view_args['extension'],
+                ", ".join(supported_image_formats)
+            )
+        )
 
+    srid = request.view_args['srid']
+    col = request.view_args['col']
+    row = request.view_args['row']
     if srid == 21781:
         row, col = col, row
 
@@ -94,44 +106,50 @@ def validate_wmts_request(
         abort(400, f'Unsupported srid {srid}')
 
     try:
-        bbox = gagrid.tileBounds(zoom, col, row)
+        bbox = gagrid.tileBounds(request.view_args['zoom'], col, row)
     except AssertionError as error:
+        zoom = request.view_args['zoom']
         logger.error(
             'Unsupported zoom level %s for srid %s: %s', zoom, srid, error
         )
         abort(400, f'Unsupported zoom level {zoom} for srid {srid}')
 
     if not gagrid.intersectsExtent(bbox):
+        zoom = request.view_args['zoom']
         logger.error('Tile %d/%d/%d out of bbox %s', zoom, row, col, bbox)
         abort(400, f'Tile out of bounds {zoom}/{row}/{col}')
 
     return gagrid, bbox
 
 
-def validate_restriction(layer_id, time, extension, gagrid, zoom, srid):
+def validate_restriction(gagrid):
+    layer_id = request.view_args['layer_id']
     # restriction checks based on bod values / getcap values go here
     restriction = get_wmts_config_by_layer(layer_id)
     write_s3 = None
     if restriction:
         # timestamp
-        if time not in restriction['timestamps']:
+        if request.view_args['time'] not in restriction['timestamps']:
+            time_value = request.view_args['time']
             msg = 'Unsupported timestamp %s, ' \
                   'supported timestamps are %s'
-            logger.error(msg, time, ", ".join(restriction["timestamps"]))
-            abort(400, msg % (time, ", ".join(restriction["timestamps"])))
+            logger.error(msg, time_value, ", ".join(restriction["timestamps"]))
+            abort(400, msg % (time_value, ", ".join(restriction["timestamps"])))
 
         # format/extension
-        if extension not in restriction['formats']:
+        if request.view_args['extension'] not in restriction['formats']:
+            extension = request.view_args['extension']
             msg = 'Unsupported image format %s,' \
                   'supported format is %s'
             logger.error(msg, extension, restriction["formats"])
             abort(400, msg % (extension, restriction["formats"]))
 
+        zoom = request.view_args['zoom']
         resolution = gagrid.getResolution(zoom)
         resolution_max = restriction['resolution_max']
         s3_resolution_max = restriction['s3_resolution_max']
         # convert according to base unit
-        if srid == 4326:
+        if request.view_args['srid'] == 4326:
             resolution = resolution * gagrid.metersPerUnit
         # max resolution
         if resolution < resolution_max:
@@ -175,16 +193,16 @@ def optimize_image(content, gutter):
     return content
 
 
-def get_optimized_tile(bbox, extension, srid, layer_id, gutter, timestamp):
+def get_optimized_tile(bbox, gutter):
     start = perf_counter()
-    response = get_wms_tile(bbox, extension, srid, layer_id, gutter, timestamp)
+    response = get_wms_tile(bbox, gutter)
 
     # Optimize images if needed
     content = response.content
     content_type = response.headers['Content-Type']
     if (
         response.ok and response.content and content_type == 'image/png' and
-        extension == 'png' and gutter > 0
+        request.view_args['extension'] == 'png' and gutter > 0
     ):
         content = optimize_image(content, gutter)
     tile_generation_time = perf_counter() - start
@@ -241,35 +259,17 @@ def handle_2nd_level_cache(write_s3, mode, headers, content):
     return on_close
 
 
-def prepare_wmts_response(
-    version,
-    layer_id,
-    style_name,
-    time,
-    srid,
-    zoom,
-    col,
-    row,
-    extension,
-    mode,
-    etag
-):
-    # pylint: disable=too-many-locals
-    gagrid, bbox = validate_wmts_request(
-        version, style_name, time, srid, zoom, col, row, extension
-    )
-    restriction, gutter, write_s3 = validate_restriction(
-        layer_id, time, extension, gagrid, zoom, srid
-    )
-    image_format = get_image_format(extension)
+def prepare_wmts_response(mode, etag):
+    gagrid, bbox = validate_wmts_request()
+    restriction, gutter, write_s3 = validate_restriction(gagrid)
 
-    shift = gagrid.RESOLUTIONS[zoom] * gutter
+    shift = gagrid.RESOLUTIONS[request.view_args['zoom']] * gutter
     bbox = extend_bbox(bbox, shift)
-    if srid == 4326:
+    if request.view_args['srid'] == 4326:
         bbox = [bbox[1], bbox[0], bbox[3], bbox[2]]
 
-    (status_code, content, headers, wms_time, tile_generation_time
-    ) = get_optimized_tile(bbox, image_format, srid, layer_id, gutter, time)
+    (status_code, content, headers, wms_time,
+     tile_generation_time) = get_optimized_tile(bbox, gutter)
     headers = prepare_wmts_headers(
         content, headers, wms_time, tile_generation_time, restriction
     )

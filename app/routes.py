@@ -120,15 +120,6 @@ def get_tile(
     else:
         logger.debug('Returning image from the WMS server')
         status_code, content, headers, on_close = prepare_wmts_response(
-            version,
-            layer_id,
-            style_name,
-            time,
-            srid,
-            zoom,
-            col,
-            row,
-            extension,
             mode,
             etag
         )

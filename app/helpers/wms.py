@@ -4,8 +4,10 @@ import requests
 import requests.exceptions
 
 from flask import abort
+from flask import request
 
 from app import settings
+from app.helpers.utils import get_image_format
 
 logger = logging.getLogger(__name__)
 
@@ -13,31 +15,26 @@ req_session = requests.Session()
 req_session.mount('http://', requests.adapters.HTTPAdapter(max_retries=0))
 
 
-def get_wms_params(
-    bbox, image_format, srid, layers, gutter, timestamp, width=256, height=256
-):
+def get_wms_params(bbox, gutter, width=256, height=256):
+    image_format = get_image_format(request.view_args['extension'])
     return {
         'SERVICE': 'WMS',
         'VERSION': '1.3.0',
         'REQUEST': 'GetMap',
         'FORMAT': f'image/{image_format}',
         'TRANSPARENT': 'true' if image_format == 'png' else 'false',
-        'LAYERS': layers,
+        'LAYERS': request.view_args["layer_id"],
         'WIDTH': f'{width + gutter * 2}',
         'HEIGHT': f'{height + gutter * 2}',
-        'CRS': f'EPSG:{srid}',
+        'CRS': f'EPSG:{request.view_args["srid"]}',
         'STYLES': '',
-        'TIME': timestamp,
+        'TIME': request.view_args['time'],
         'BBOX': ','.join([str(b) for b in bbox])
     }
 
 
-def get_wms_resource(
-    bbox, image_format, srid, layers, gutter, timestamp, width=256, height=256
-):
-    params = get_wms_params(
-        bbox, image_format, srid, layers, gutter, timestamp, width, height
-    )
+def get_wms_resource(bbox, gutter, width=256, height=256):
+    params = get_wms_params(bbox, gutter, width, height)
     logger.info(
         'Fetching wms image: %s?%s',
         settings.WMS_BACKEND,
@@ -55,11 +52,9 @@ def get_wms_backend_root():
     return response.content
 
 
-def get_wms_tile(bbox, extension, srid, layer_id, gutter, timestamp):
+def get_wms_tile(bbox, gutter):
     try:
-        response = get_wms_resource(
-            bbox, extension, srid, layer_id, gutter, timestamp
-        )
+        response = get_wms_resource(bbox, gutter)
         content_type = response.headers.get('Content-Type', 'text/xml')
         logger.debug(
             'WMS response %s; content-type: %s, content: %s',
