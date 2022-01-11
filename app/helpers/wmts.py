@@ -223,7 +223,7 @@ def handle_2nd_level_cache(write_s3, mode, headers, content):
         # cache layer in s3
         if settings.S3_WRITE_MODE == 'async':
             put_s3_file_async(content, request.path, headers)
-        if settings.S3_WRITE_MODE == 'on_close':
+        elif settings.S3_WRITE_MODE == 'on_close':
             wmts_path = request.path
 
             def on_close_handler():

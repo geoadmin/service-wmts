@@ -358,6 +358,7 @@ class GetTileRequestsS3Tests(GetTileRequestsBaseTests):
 
     @requests_mock.Mocker()
     @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
     def test_wmts_nodata_true(self, mocker, mock_put_s3_file, mock_get_s3_file):
         mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
         self.get_wms_request_mock(mocker)
@@ -377,6 +378,7 @@ class GetTileRequestsS3Tests(GetTileRequestsBaseTests):
 
     @requests_mock.Mocker()
     @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
     def test_wmts_nodata_false(
         self, mocker, mock_put_s3_file, mock_get_s3_file
     ):
@@ -398,6 +400,7 @@ class GetTileRequestsS3Tests(GetTileRequestsBaseTests):
 
     @requests_mock.Mocker()
     @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
     def test_wmts_cadastral_wms_proxy(
         self, mocker, mock_put_s3_file, mock_get_s3_file
     ):
@@ -413,6 +416,7 @@ class GetTileRequestsS3Tests(GetTileRequestsBaseTests):
 
     @requests_mock.Mocker()
     @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
     def test_wmts_default_mode(
         self, mocker, mock_put_s3_file, mock_get_s3_file
     ):
