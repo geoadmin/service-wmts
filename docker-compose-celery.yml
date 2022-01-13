@@ -39,11 +39,32 @@ services:
         target: /data
     ports:
       - 9090:9000
+  s3-client:
+    image: minio/mc
+    links:
+      - s3
+    env_file: ./minio.env
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+        set +o history;
+        while ! echo > /dev/tcp/s3/9000;
+        do
+          echo waiting for minio;
+          sleep 1;
+        done;
+        echo minio server is up;
+        /usr/bin/mc alias set minio http://s3:9000 $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY};
+        echo create bucket $${AWS_S3_BUCKET_NAME};
+        /usr/bin/mc mb -p minio/$${AWS_S3_BUCKET_NAME};
+        /usr/bin/mc policy set download minio/$${AWS_S3_BUCKET_NAME};
+        exit 0;
+      "
   rabbitmq:
-    image: rabbitmq:3.6-alpine
-    environment:
-      RABBITMQ_PORT: 5672
-    network_mode: "host"
+    image: rabbitmq:3.8-management
+    ports:
+      - 5672:5672
+      - 15672:15672
   celery-workers:
     image: "974517877189.dkr.ecr.eu-central-1.amazonaws.com/service-wmts:celery-workers-local"
     build:
@@ -58,8 +79,11 @@ services:
     environment:
       BOD_DB_PORT: 5432
       BOD_DB_HOST: db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      AWS_S3_ENDPOINT_URL: http://s3:9000
       LOGS_DIR: /logs
-      LOGGING_CFG: /service-wmts/config/logging-cfg-local.yml
+      LOGGING_CFG: /service-wmts/config/logging-cfg-local-celery-workers.yml
     entrypoint:
       - /scripts/wait-for-it.sh
       - db:5432
@@ -71,7 +95,8 @@ services:
       - -P
       - gevent
       - --autoscale=17,8
-      - --loglevel=info
+      - --loglevel=debug
+      - -E
     depends_on:
       - s3
       - rabbitmq

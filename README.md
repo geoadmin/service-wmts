@@ -27,7 +27,6 @@
   - [Query Parameters](#query-parameters)
     - [`mode` - Operation Mode](#mode---operation-mode)
       - [default](#default)
-      - [debug](#debug)
       - [preview](#preview)
     - [`nodata`](#nodata)
   - [S3 2nd level caching](#s3-2nd-level-caching)
@@ -222,7 +221,7 @@ NOTE: `max-age` is usually used by the Browser, while `s-maxage` by the server c
 | RABBITMQ_PORT | `5672` | Rabbitmq host name used by Celery for async level tasks |
 | AWS_ACCESS_KEY_ID | | AWS access key for S3 |
 | AWS_SECRET_ACCESS_KEY | | AWS access secret for S3 |
-| AWS_S3_BUCKET_NAME | | S3 bucket name used for 2nd level caching |
+| AWS_S3_BUCKET_NAME | `service-wmts-cache` | S3 bucket name used for 2nd level caching |
 | AWS_S3_REGION_NAME | | AWS Region |
 | AWS_S3_ENDPOINT_URL | | AWS endpoint url if not standard. This allow to use a local S3 instance with minio |
 
@@ -249,32 +248,21 @@ For performance reason the WMTS Config needed to return a Web Map Tile, is cache
 
 `mode=default`
 
-This mode is the default mode for the WMS proxy. It is meant to be integrated with the full stack.
+This mode is the default mode for the WMTS service. It is meant to be integrated with the full stack.
 
 The steps are:
 
-1. Request the WMS server image
-2. Puts the image in S3 in the background (Only if `ENABLE_S3_CACHING=1`)
-3. Return the WMS image to the client
-
-##### debug
-
-`mode=debug`
-
-This mode should be used when debugging the app (requires `ENABLE_S3_CACHING=1`).
-
-The steps are:
-
-1. Check if the image has already been created in S3
-2. Return the image from S3
-
-If the image doesn't exist it follows the `default` mode.
+1. Check if the tile is present on S3 (Only if `ENABLE_S3_CACHING=1`)
+2. If yes return the S3 tile to the client
+3. Otherwise request the tile from the WMS server image
+4. If needed puts the tile in S3 in the background (Only if `ENABLE_S3_CACHING=1`)
+5. Return the WMS image to the client
 
 ##### preview
 
 `mode=preview`
 
-This mode is meant to be used to test the configuration of the wms server.
+This mode is meant to be used to test the configuration of the wms server (skipping caching in S3).
 
 The steps are:
 
@@ -289,15 +277,13 @@ No data parameter can be used for tile creation.
 
 Returns `OK` if the image was successfully fetched and created. Can be used for tile generation.
 
+Note the Tile will be put into 2nd level S3 cache if needed.
+
 ### S3 2nd level caching
 
-On the old infrastructure in AWS Ireland, we had a second level caching done by S3, where each request
-where cached by the service in a S3 bucket and then Varnish was first checking the 2nd level cache on S3 before
-redirecting the request to the service. This was done because the CloudFront cache rate was quite low and we
-needed a better caching to improve performance.
+Because some tiles are very slow to generates; up to 30 seconds, those ones are also cached into a 2nd level cache on S3. Tiles are saved on S3 based on the BOD configuration; `s3_resolution_max`.
+This cache is more deterministic as any other CDN cache (e.g. CloudFront cache).
 
-This should not be needed anymore with the new infrastructure in AWS Frankfurt. However the whole logic has
-been migrated just in case this is needed to further improved performance.
 
 ## GetCapabilities
 

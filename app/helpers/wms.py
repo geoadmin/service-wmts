@@ -1,51 +1,40 @@
-import io
 import logging
-from time import perf_counter
 
 import requests
 import requests.exceptions
-from PIL import Image
 
 from flask import abort
+from flask import request
 
 from app import settings
-from app.helpers.utils import crop_image
-from app.helpers.utils import digest
+from app.helpers.utils import get_image_format
 
 logger = logging.getLogger(__name__)
 
 req_session = requests.Session()
 req_session.mount('http://', requests.adapters.HTTPAdapter(max_retries=0))
-# TODO CLEAN_UP remove the https session which might not be needed if only
-# internally served.
-req_session.mount('https://', requests.adapters.HTTPAdapter(max_retries=0))
 
 
-def get_wms_params(
-    bbox, image_format, srid, layers, gutter, timestamp, width=256, height=256
-):
+def get_wms_params(bbox, gutter, width=256, height=256):
+    image_format = get_image_format(request.view_args['extension'])
     return {
         'SERVICE': 'WMS',
         'VERSION': '1.3.0',
         'REQUEST': 'GetMap',
         'FORMAT': f'image/{image_format}',
         'TRANSPARENT': 'true' if image_format == 'png' else 'false',
-        'LAYERS': layers,
+        'LAYERS': request.view_args["layer_id"],
         'WIDTH': f'{width + gutter * 2}',
         'HEIGHT': f'{height + gutter * 2}',
-        'CRS': f'EPSG:{srid}',
+        'CRS': f'EPSG:{request.view_args["srid"]}',
         'STYLES': '',
-        'TIME': timestamp,
+        'TIME': request.view_args['time'],
         'BBOX': ','.join([str(b) for b in bbox])
     }
 
 
-def get_wms_resource(
-    bbox, image_format, srid, layers, gutter, timestamp, width=256, height=256
-):
-    params = get_wms_params(
-        bbox, image_format, srid, layers, gutter, timestamp, width, height
-    )
+def get_wms_resource(bbox, gutter, width=256, height=256):
+    params = get_wms_params(bbox, gutter, width, height)
     logger.info(
         'Fetching wms image: %s?%s',
         settings.WMS_BACKEND,
@@ -63,12 +52,9 @@ def get_wms_backend_root():
     return response.content
 
 
-def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
+def get_wms_tile(bbox, gutter):
     try:
-        start = perf_counter()
-        response = get_wms_resource(
-            bbox, extension, srid, layer_id, gutter, timestamp
-        )
+        response = get_wms_resource(bbox, gutter)
         content_type = response.headers.get('Content-Type', 'text/xml')
         logger.debug(
             'WMS response %s; content-type: %s, content: %s',
@@ -86,7 +72,6 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
         logger.error(error, exc_info=True)
         abort(502, 'Bad Gateway')
 
-    # Optimize images
     # Detect/Create transparent images
     if 'text/xml' in content_type:
         logger.error(
@@ -96,20 +81,5 @@ def prepare_wmts_response(bbox, extension, srid, layer_id, gutter, timestamp):
             extra={"wms_response": response.text}
         )
         abort(501, f'Unable to process the request: {response.content}')
-    headers = {}
-    content = response.content
-    if (
-        response.ok and response.content and content_type == 'image/png' and
-        extension == 'png' and gutter > 0
-    ):
-        with Image.open(io.BytesIO(content)) as img:
-            img = crop_image(img, gutter)
-            out = io.BytesIO()
-            img.save(out, format='PNG')
-            content = out.getvalue()
-    headers['Content-Type'] = content_type
-    etag = response.headers.get('Etag', digest(content))
-    headers['Etag'] = f'"{etag}"'
-    headers['X-WMS-Time'] = response.elapsed.total_seconds()
-    headers['X-Tile-Generation-Time'] = f'{perf_counter() - start:.6f}'
-    return response.status_code, content, headers
+
+    return response

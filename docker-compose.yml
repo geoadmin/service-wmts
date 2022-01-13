@@ -29,3 +29,34 @@ services:
       - type: bind
         source: ${PWD}/scripts/sql/init_local_db.sql
         target: /docker-entrypoint-initdb.d/setup-db.sql
+  s3:
+    image: minio/minio
+    env_file: ./minio.env
+    command: server /data
+    volumes:
+      - type: bind
+        source: ${PWD}/.volumes/minio
+        target: /data
+    ports:
+      - 9090:9000
+  s3-client:
+    image: minio/mc
+    links:
+      - s3
+    env_file: ./minio.env
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+        set +o history;
+        while ! echo > /dev/tcp/s3/9000;
+        do
+          echo waiting for minio;
+          sleep 1;
+        done;
+        echo minio server is up;
+        /usr/bin/mc alias set minio http://s3:9000 $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY};
+        echo create bucket $${AWS_S3_BUCKET_NAME};
+        /usr/bin/mc mb -p minio/$${AWS_S3_BUCKET_NAME};
+        /usr/bin/mc policy set download minio/$${AWS_S3_BUCKET_NAME};
+        exit 0;
+      "

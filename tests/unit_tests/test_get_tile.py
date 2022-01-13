@@ -13,12 +13,43 @@ from app.helpers.wmts_config import init_wmts_config
 init_wmts_config()
 
 
+class HTTPConnectionMock:
+
+    def __init__(self, response_mock):
+        self._response_mock = response_mock
+
+    def request(self, *args, **kwargs):
+        pass
+
+    def close(self):
+        pass
+
+    def getresponse(self):
+        return self._response_mock
+
+
+class HttpResponseMock:
+
+    def __init__(self, status, headers, data):
+        self.status = status
+        self.reason = "reason"
+        self.headers = headers
+        self.data = data
+
+    def read(self):
+        return self.data
+
+    def getheaders(self):
+        return self.headers.items()
+
+
 def get_image_data():
     with open('tests/sample/gutter_image.png', 'rb') as fd:
         data = fd.read()
     return data
 
 
+@patch('app.settings.ENABLE_S3_CACHING', False)
 class InvalidRequestTests(unittest.TestCase):
 
     def setUp(self):
@@ -136,13 +167,14 @@ class InvalidRequestTests(unittest.TestCase):
         self.assertCacheControl(resp)
 
 
-class GetTileRequestsTests(unittest.TestCase):
+class GetTileRequestsBaseTests(unittest.TestCase):
 
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True
 
-    def assertXWmtsHeaders(self, response):
+    def assertXWmtsHeaders(self, response, cache_hit=False):
+        self.assert2ndCacheHeader(response, cache_hit)
         self.assertIn('X-WMS-Time', response.headers)
         try:
             self.assertGreater(float(response.headers['X-WMS-Time']), 0)
@@ -157,6 +189,17 @@ class GetTileRequestsTests(unittest.TestCase):
             self.fail(
                 f'Invalid value "{err}" for X-Tile-Generation-Time header'
             )
+
+    def assert2ndCacheHeader(self, response, cache_hit):
+        self.assertIn('X-Tiles-S3-Cache', response.headers)
+        self.assertEqual(
+            response.headers['X-Tiles-S3-Cache'],
+            'hit' if cache_hit else 'miss'
+        )
+
+
+@patch('app.settings.ENABLE_S3_CACHING', False)
+class GetTileRequestsTests(GetTileRequestsBaseTests):
 
     def test_wmts_options_method(self):
         resp = self.app.options(
@@ -205,7 +248,7 @@ class GetTileRequestsTests(unittest.TestCase):
         self.assertEqual(img.height, 256)
 
         # Check proprietary timing headers
-        self.assertXWmtsHeaders(resp)
+        self.assertXWmtsHeaders(resp, cache_hit=False)
 
     @requests_mock.Mocker()
     def test_wmts_4326(self, mocker):
@@ -259,91 +302,127 @@ class GetTileRequestsTests(unittest.TestCase):
             'in GetTile response.'
         )
 
-    @requests_mock.Mocker()
-    @patch('app.routes.put_s3_img')
-    @patch('app.settings.ENABLE_S3_CACHING', True)
-    def test_wmts_nodata_true(self, mocker, mock_put_s3_img):
-        data = get_image_data()
 
-        mocker.get(
+@patch('app.settings.ENABLE_S3_CACHING', True)
+@patch('http.client.HTTPConnection')
+class GetTileRequestsS3Tests(GetTileRequestsBaseTests):
+
+    def setUp(self):
+        super().setUp()
+
+        self.data = get_image_data()
+        self.mock_get_s3_file_response_ok = HttpResponseMock(
+            200, {
+                'Content-Type': 'image/png',
+                'Content-Length': str(len(self.data))
+            },
+            self.data
+        )
+        self.assertEqual(self.mock_get_s3_file_response_ok.status, 200)
+        self.s3_not_found_data = '''
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Error>
+            <Code>NoSuchKey</Code>
+            <Message>The specified key does not exist.</Message>
+            <Key>my-key</Key>
+            <BucketName>service-wmts-cache</BucketName>
+            <Resource>/service-wmts-cache/my-key</Resource>
+            <RequestId>16C7ABC12677586E</RequestId>
+            <HostId>ddef4098-7a5f-41e9-a8ba-dd9ae85f0459</HostId>
+        </Error>
+        '''
+        self.mock_get_s3_file_response_nok = HttpResponseMock(
+            404,
+            {
+                'Content-Type': 'application/xml',
+                'Content-Length': str(len(self.s3_not_found_data))
+            },
+            self.s3_not_found_data
+        )
+        self.assertEqual(self.mock_get_s3_file_response_nok.status, 404)
+        self.mock_get_s3_file_conn_ok = HTTPConnectionMock(
+            self.mock_get_s3_file_response_ok
+        )
+        self.mock_get_s3_file_conn_nok = HTTPConnectionMock(
+            self.mock_get_s3_file_response_nok
+        )
+
+    def get_wms_request_mock(self, mocker):
+        return mocker.get(
             settings.WMS_BACKEND,
-            content=data,
+            content=self.data,
             headers={
-                'Content-Type': 'image/png', 'Content-Length': str(len(data))
+                'Content-Type': 'image/png',
+                'Content-Length': str(len(self.data))
             }
         )
+
+    @requests_mock.Mocker()
+    @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
+    def test_wmts_nodata_true(self, mocker, mock_put_s3_file, mock_get_s3_file):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
+        self.get_wms_request_mock(mocker)
 
         resp = self.app.get(
             '/1.0.0/inline_points/default/current/4326/15/34136/7882.png' +
             '?nodata=true&mode=default'
         )
-        mock_put_s3_img.assert_called()
+        mock_put_s3_file.assert_called()
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data, b'OK')
         self.assertEqual(
             resp.headers['Cache-Control'],
-            'public, max-age=3600, s-maxage=5184000'
+            'public, max-age=3600, s-maxage=31556952'
         )
+        self.assert2ndCacheHeader(resp, False)
 
     @requests_mock.Mocker()
-    @patch('app.routes.put_s3_img')
-    @patch('app.settings.ENABLE_S3_CACHING', True)
-    def test_wmts_nodata_false(self, mocker, mock_put_s3_img):
-        data = get_image_data()
-
-        mocker.get(
-            settings.WMS_BACKEND,
-            content=data,
-            headers={
-                'Content-Type': 'image/png', 'Content-Length': str(len(data))
-            }
-        )
+    @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
+    def test_wmts_nodata_false(
+        self, mocker, mock_put_s3_file, mock_get_s3_file
+    ):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
+        self.get_wms_request_mock(mocker)
 
         resp = self.app.get(
             '/1.0.0/inline_points/default/current/4326/15/34136/7882.png'
             '?nodata=false&mode=default'
         )
-        mock_put_s3_img.assert_called()
+        mock_put_s3_file.assert_called()
         self.assertEqual(resp.status_code, 200)
         self.assertNotEqual(resp.data, b'OK')
         self.assertEqual(
             resp.headers['Cache-Control'],
             'public, max-age=3600, s-maxage=31556952'
         )
+        self.assert2ndCacheHeader(resp, False)
 
     @requests_mock.Mocker()
-    @patch('app.routes.put_s3_img')
-    @patch('app.settings.ENABLE_S3_CACHING', True)
-    def test_wmts_cadastral_wms_proxy(self, mocker, mock_put_s3_img):
-        data = get_image_data()
-
-        mocker.get(
-            settings.WMS_BACKEND,
-            content=data,
-            headers={
-                'Content-Type': 'image/png', 'Content-Length': str(len(data))
-            }
-        )
+    @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
+    def test_wmts_cadastral_wms_proxy(
+        self, mocker, mock_put_s3_file, mock_get_s3_file
+    ):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
+        self.get_wms_request_mock(mocker)
 
         resp = self.app.get(
             '1.0.0/inline_points/default/current/2056/17/4/7.png'
         )
         self.assertEqual(resp.status_code, 200)
-        mock_put_s3_img.assert_called()
+        mock_put_s3_file.assert_called()
+        self.assert2ndCacheHeader(resp, False)
 
     @requests_mock.Mocker()
-    @patch('app.routes.put_s3_img')
-    @patch('app.settings.ENABLE_S3_CACHING', True)
-    def test_wmts_default_mode(self, mocker, mock_put_s3_img):
-        data = get_image_data()
-
-        mocker.get(
-            settings.WMS_BACKEND,
-            content=data,
-            headers={
-                'Content-Type': 'image/png', 'Content-Length': str(len(data))
-            }
-        )
+    @patch('app.helpers.wmts.put_s3_file')
+    @patch('app.settings.S3_WRITE_MODE', 'sync')
+    def test_wmts_default_mode(
+        self, mocker, mock_put_s3_file, mock_get_s3_file
+    ):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
+        self.get_wms_request_mock(mocker)
 
         resp = self.app.get(
             '/1.0.0/inline_points/default/current/21781/20/76/44.png'
@@ -354,9 +433,52 @@ class GetTileRequestsTests(unittest.TestCase):
             resp.headers['Cache-Control'],
             'public, max-age=3600, s-maxage=31556952'
         )
-        mock_put_s3_img.assert_called()
+        mock_put_s3_file.assert_called()
+        self.assert2ndCacheHeader(resp, False)
+
+    @requests_mock.Mocker()
+    @patch('app.helpers.wmts.put_s3_file_async')
+    @patch('app.settings.S3_WRITE_MODE', 'async')
+    def test_wmts_default_mode_async_s3_write(
+        self, mocker, mock_put_s3_file_async, mock_get_s3_file
+    ):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
+        self.get_wms_request_mock(mocker)
+
+        resp = self.app.get(
+            '/1.0.0/inline_points/default/current/21781/20/76/44.png'
+            '?mode=default'
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp.headers['Cache-Control'],
+            'public, max-age=3600, s-maxage=31556952'
+        )
+        mock_put_s3_file_async.assert_called()
+        self.assert2ndCacheHeader(resp, False)
+
+    def test_wmts_cadastral_wms_proxy_from_s3_cache(self, mock_get_s3_file):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_ok
+
+        resp = self.app.get(
+            '1.0.0/inline_points/default/current/2056/17/4/7.png'
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assert2ndCacheHeader(resp, True)
+
+    def test_wmts_cadastral_wms_proxy_from_s3_cache_preview(
+        self, mock_get_s3_file
+    ):
+        mock_get_s3_file.return_value = self.mock_get_s3_file_conn_ok
+
+        resp = self.app.get(
+            '1.0.0/inline_points/default/current/2056/17/4/7.png?mode=preview'
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assert2ndCacheHeader(resp, False)
 
 
+@patch('app.settings.ENABLE_S3_CACHING', False)
 class ErrorRequestsTests(unittest.TestCase):
 
     def setUp(self):

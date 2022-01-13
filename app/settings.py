@@ -2,6 +2,7 @@
 import os
 from distutils.util import strtobool
 from pathlib import Path
+from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 ENV_FILE = os.getenv('ENV_FILE', f'{BASE_DIR}/.env.local')
@@ -68,22 +69,26 @@ DEFAULT_MODE = os.getenv('DEFAULT_MODE', 'default')
 
 # TODO CLEAN_UP: remove S3 second level caching if not needed
 ENABLE_S3_CACHING = strtobool(os.getenv('ENABLE_S3_CACHING', 'False'))
+# S3_WRITE_MODE can be;
+#  - on_close := done after the request has been sent
+#  - async := done asynchronously using Celery/rabbitmq stack
+#  - sync := done synchronously during the request handling
+S3_WRITE_MODE = os.getenv('S3_WRITE_MODE', 'on_close')
 # Celery and Rabbitmq settings
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
 RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', '5672'))
 CELERY_TASK_SERIALIZER = 'pickle'
-CELERY_RESULT_SERIALIZER = 'pickle'
 CELERY_ACCEPT_CONTENT = ['pickle']
 
 # AWS Settings
 # this endpoint url is only used for local development
 AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', None)
 AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
-AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
+AWS_S3_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME', 'service-wmts-cache')
 
 AWS_BUCKET_HOST = f'{AWS_S3_BUCKET_NAME}.s3-{AWS_S3_REGION_NAME}.amazonaws.com'
 if AWS_S3_ENDPOINT_URL is not None:
-    AWS_BUCKET_HOST = AWS_S3_ENDPOINT_URL
+    AWS_BUCKET_HOST = urlparse(AWS_S3_ENDPOINT_URL).netloc
 
 # SQL Alchemy
 # pylint: disable=line-too-long

@@ -13,18 +13,11 @@ from flask import request
 
 from app import app
 from app import settings
-from app.helpers.s3 import put_s3_img
-from app.helpers.utils import extend_bbox
-from app.helpers.utils import get_image_format
-from app.helpers.utils import set_cache_control
-from app.helpers.utils import tile_address
+from app.helpers.s3 import get_s3_file
 from app.helpers.wms import get_wms_backend_root
-from app.helpers.wms import prepare_wmts_response
-from app.helpers.wmts import get_wmts_path
-from app.helpers.wmts import handle_wmts_modes
 from app.helpers.wmts import prepare_wmts_cached_response
-from app.helpers.wmts import validate_restriction
-from app.helpers.wmts import validate_wmts_request
+from app.helpers.wmts import prepare_wmts_response
+from app.helpers.wmts import validate_wmts_mode
 from app.version import APP_VERSION
 from app.views import GetCapabilities
 
@@ -113,60 +106,35 @@ def wms_checker():
 def get_tile(
     version, layer_id, style_name, time, srid, zoom, col, row, extension
 ):
-    # pylint: disable=too-many-locals
-    mode, gagrid, bbox = validate_wmts_request(
-        version, style_name, time, srid, zoom, col, row, extension
-    )
-    restriction, gutter, write_s3 = validate_restriction(
-        layer_id, time, extension, gagrid, zoom, srid
-    )
-    image_format = get_image_format(extension)
+    mode = validate_wmts_mode()
+    etag = request.headers.get('If-None-Match', None)
 
-    etag_to_check = request.headers.get('If-None-Match')
-    # Determine if the image is returned in the response
-    nodata = request.args.get('nodata')
+    s3_resp = None
+    if settings.ENABLE_S3_CACHING and mode != 'preview':
+        s3_resp, content = get_s3_file(request.path, etag)
 
-    address = tile_address(gagrid, zoom, col, row)
-    wmts_path = get_wmts_path(
-        version, layer_id, style_name, time, srid, address, extension
-    )
-
-    s3_object = handle_wmts_modes(mode, wmts_path)
-
-    if s3_object:
+    on_close = None
+    if s3_resp:
         logger.debug('Preparing image response from S3...')
-        s3_resp, content = s3_object
-        status_code, headers = prepare_wmts_cached_response(s3_resp, content)
-        set_cache_control(headers, restriction)
+        status_code, headers = prepare_wmts_cached_response(s3_resp)
     else:
         logger.debug('Returning image from the WMS server')
-
-        shift = gagrid.RESOLUTIONS[zoom] * gutter
-        bbox = extend_bbox(bbox, shift)
-        if srid == 4326:
-            bbox = [bbox[1], bbox[0], bbox[3], bbox[2]]
-
-        status_code, content, headers = prepare_wmts_response(
-            bbox, image_format, srid, layer_id, gutter, time
+        status_code, content, headers, on_close = prepare_wmts_response(
+            mode,
+            etag
         )
-        set_cache_control(headers, restriction)
 
-        ctype_ok = headers.get('Content-Type') in ('image/png', 'image/jpeg')
-        if mode != "preview" and ctype_ok and write_s3:
-            # cache layer in s3
-            if settings.ENABLE_S3_CACHING:
-                put_s3_img(content, wmts_path, headers)
-            else:
-                logger.debug('S3 caching is disabled')
-        else:
-            logger.debug('Skipping insert')
+    # Determine if the image is returned in the response
+    if request.args.get('nodata', None) == 'true':
+        response = Response(
+            'OK', status=200, headers=headers, mimetype='text/plain'
+        )
+    else:
+        response = Response(content, headers=headers, status=status_code)
 
-        if etag_to_check == headers.get('Etag'):
-            content, status_code = ('', 304)
-
-    if nodata == 'true':
-        return Response('OK', status=200, mimetype='text/plain')
-    return Response(content, headers=headers, status=status_code)
+    if on_close:
+        response.call_on_close(on_close)
+    return response
 
 
 view_get_capabilities = GetCapabilities.as_view('get_capabilities')
