@@ -82,16 +82,6 @@ Then you need to run some local containers (DB, WMS-BOD)
 docker-compose up
 ```
 
-If you want to enable and test the S3 2nd level caching (`ENABLE_S3_CACHING=1`) you need instead
-to run:
-
-```bash
-docker-compose -f docker-compose-celery.yml up --build
-```
-
-*NOTE: the `--build` argument is to make sure that the Celery container gets rebuild with your code.
-Each time that you changes code related to the async tasks, then the containers needs to be restarted respectively rebuilt.*
-
 That's it, you're ready to work.
 
 ### Running the server locally
@@ -216,9 +206,6 @@ NOTE: `max-age` is usually used by the Browser, while `s-maxage` by the server c
 
 | Variable | Default | Description |
 |---|---|---|
-| ENABLE_S3_CACHING | `0` | Enable S3 2nd level caching |
-| RABBITMQ_PORT | `localhost` | Rabbitmq host name used by Celery for async level tasks |
-| RABBITMQ_PORT | `5672` | Rabbitmq host name used by Celery for async level tasks |
 | AWS_ACCESS_KEY_ID | | AWS access key for S3 |
 | AWS_SECRET_ACCESS_KEY | | AWS access secret for S3 |
 | AWS_S3_BUCKET_NAME | `service-wmts-cache` | S3 bucket name used for 2nd level caching |
@@ -252,10 +239,10 @@ This mode is the default mode for the WMTS service. It is meant to be integrated
 
 The steps are:
 
-1. Check if the tile is present on S3 (Only if `ENABLE_S3_CACHING=1`)
+1. Check if the tile is present on S3
 2. If yes return the S3 tile to the client
 3. Otherwise request the tile from the WMS server image
-4. If needed puts the tile in S3 in the background (Only if `ENABLE_S3_CACHING=1`)
+4. If needed puts the tile in S3 after closing the TCP connection with client
 5. Return the WMS image to the client
 
 ##### preview
@@ -283,7 +270,6 @@ Note the Tile will be put into 2nd level S3 cache if needed.
 
 Because some tiles are very slow to generates; up to 30 seconds, those ones are also cached into a 2nd level cache on S3. Tiles are saved on S3 based on the BOD configuration; `s3_resolution_max`.
 This cache is more deterministic as any other CDN cache (e.g. CloudFront cache).
-
 
 ## GetCapabilities
 
