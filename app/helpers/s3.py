@@ -32,7 +32,7 @@ def get_s3_client():
         's3',
         endpoint_url=settings.AWS_S3_ENDPOINT_URL,
         region_name=settings.AWS_S3_REGION_NAME,
-        config=Config(signature_version='s3')
+        config=Config(signature_version='s3v4')
     )
 
 
