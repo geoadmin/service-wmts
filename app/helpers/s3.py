@@ -17,7 +17,7 @@ def _get_s3_base_path():
     if settings.AWS_S3_ENDPOINT_URL:
         # When working locally with minio as S3, the bucket name must be part
         # of the path.
-        return f'{settings.AWS_S3_BUCKET_NAME}/'
+        return f'/{settings.AWS_S3_BUCKET_NAME}'
     return ''
 
 
@@ -41,7 +41,7 @@ def get_s3_file(wmts_path, etag=None):
 
     Args:
         wmts_path: str
-            Path correspond to the S3 key
+            Path correspond to the S3 key (without leading '/')
         etag: str | None
             ETag to pass as If-None-Match header
 
@@ -55,8 +55,8 @@ def get_s3_file(wmts_path, etag=None):
         headers['If-None-Match'] = etag
 
     try:
-        path = f"/{_get_s3_base_path()}{wmts_path}"
-        logger.debug('Get file from S3: %s/%s', settings.AWS_BUCKET_HOST, path)
+        path = f"{_get_s3_base_path()}/{wmts_path}"
+        logger.debug('Get file from S3: %s%s', settings.AWS_BUCKET_HOST, path)
         http_client = http.client.HTTPConnection(
             settings.AWS_BUCKET_HOST, timeout=0.5
         )
@@ -110,7 +110,7 @@ def put_s3_file(content, wmts_path, headers):
         content: str
             File content
         wmts_path: str
-            S3 key to use (usually the wmts path)
+            S3 key to use (usually the wmts path without leading '/')
         headers: dict
             header to set with the S3 object
     '''
