@@ -111,7 +111,7 @@ def get_tile(
 
     s3_resp = None
     if mode != 'preview':
-        s3_resp, content = get_s3_file(request.path, etag)
+        s3_resp, content = get_s3_file(request.path.lstrip('/'), etag)
 
     on_close = None
     if s3_resp:

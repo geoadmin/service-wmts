@@ -238,7 +238,7 @@ def handle_2nd_level_cache(write_s3, mode, headers, content):
         # this will be useful for performance tests
         headers['X-Tiles-S3-Cache-Write'] = 'write tile to S3 cache'
 
-        wmts_path = request.path
+        wmts_path = request.path.lstrip('/')
 
         def on_close_handler():
             put_s3_file(content, wmts_path, headers)
