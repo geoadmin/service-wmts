@@ -25,34 +25,6 @@ services:
       - type: bind
         source: ${PWD}/scripts/sql/init_local_db.sql
         target: /docker-entrypoint-initdb.d/setup-db.sql
-  rabbitmq:
-    image: rabbitmq:3.6-alpine
-    environment:
-      RABBITMQ_PORT: 5672
-  celery-workers:
-    image: "974517877189.dkr.ecr.eu-central-1.amazonaws.com/service-wmts:celery-workers-ci"
-    build:
-      context: .
-      target: unittest
-    env_file:
-      .env.ci
-    environment:
-      LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
-    entrypoint:
-      - /scripts/wait-for-it.sh
-      - db:5432
-      - --
-      - celery
-      - -A
-      - app.celery
-      - worker
-      - -P
-      - gevent
-      - --autoscale=17,8
-      - --loglevel=info
-    depends_on:
-      - rabbitmq
-      - db
   app:
     image: "974517877189.dkr.ecr.eu-central-1.amazonaws.com/service-wmts-ci"
     build:
@@ -72,5 +44,4 @@ services:
     environment:
       LOGGING_CFG: /service-wmts/config/logging-cfg-ci.yml
     depends_on:
-      - celery-workers
       - db

@@ -1,6 +1,5 @@
 import logging
 
-from kombu.serialization import registry
 from werkzeug.exceptions import HTTPException
 
 from flask import Flask
@@ -8,15 +7,10 @@ from flask import request
 from flask_sqlalchemy import SQLAlchemy
 
 from app import settings
-from app.helpers.celery import make_celery
 from app.helpers.utils import get_closest_zoom
 from app.helpers.utils import make_error_msg
 
 logger = logging.getLogger(__name__)
-
-# TODO CLEAN_UP: Enable kombu pickle serializer that is used by Celery to
-# serialize messages
-registry.enable('pickle')
 
 # Standard Flask application initialization
 
@@ -26,12 +20,8 @@ app.config.from_object('app.settings')
 # Setup the DB
 db = SQLAlchemy(app)
 
-# TODO CLEAN_UP: remove S3 second level caching if not needed
-celery = make_celery(app)
 
 # JINJA Configuration
-
-
 # Jinja doesn't support by default the string split() method therefore add it
 # here
 @app.template_filter('split')

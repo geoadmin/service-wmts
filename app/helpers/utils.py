@@ -9,6 +9,7 @@ from pyproj import transform
 
 from flask import jsonify
 from flask import make_response
+from flask import request
 
 from app.settings import GET_TILE_BROWSER_CACHE_MAX_TTL
 from app.settings import GET_TILE_CACHE_TEMPLATE
@@ -45,13 +46,6 @@ def re_project_bbox(bbox, srid_to, srid_from=2056):
     return p_left + p_right
 
 
-def tile_address(grid, zoom, col, row):
-    return grid.tileAddressTemplate \
-        .replace('{zoom}', str(zoom)) \
-        .replace('{tileCol}', str(col)) \
-        .replace('{tileRow}', str(row))
-
-
 def digest(data):
     return hashlib.md5(data).hexdigest()
 
@@ -83,6 +77,9 @@ def get_image_format(extension):
     # remove it
     if extension == 'pngjpeg':
         image_format = 'png'
+        logger.warning(
+            'Extension pngjpeg hack detected for tile  %s', request.path
+        )
     return image_format
 
 

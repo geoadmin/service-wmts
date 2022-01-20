@@ -1,11 +1,11 @@
--- create read-only user www-data
-CREATE ROLE "www-data" WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'www-data';
+-- create read-only user local-db-user
+CREATE ROLE "local-db-user" WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'local-db-user';
 
 -- create the schema
 
 CREATE SCHEMA "service-wmts";
 
-GRANT ALL ON SCHEMA "service-wmts" TO "www-data";
+GRANT ALL ON SCHEMA "service-wmts" TO "local-db-user";
 
 -- create tables
 CREATE TABLE public.tileset
@@ -53,7 +53,7 @@ CREATE VIEW "service-wmts".view_tileset_concatenated
   GROUP BY tileset.fk_dataset_id, tileset.cache_ttl
   ORDER BY tileset.fk_dataset_id;
 
-GRANT SELECT ON TABLE "service-wmts".view_tileset_concatenated TO "www-data";
+GRANT SELECT ON TABLE "service-wmts".view_tileset_concatenated TO "local-db-user";
 
 -- populate tables with dummy data layer from simple.map
     -- valid format: png
@@ -74,5 +74,5 @@ INSERT INTO public.tileset_timestamps(
             , 'current'
             );
 
-GRANT SELECT ON TABLE public.tileset TO "www-data";
-GRANT SELECT ON TABLE public.tileset_timestamps TO "www-data";
+GRANT SELECT ON TABLE public.tileset TO "local-db-user";
+GRANT SELECT ON TABLE public.tileset_timestamps TO "local-db-user";
