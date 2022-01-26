@@ -390,8 +390,8 @@ components:
                       </ows:Keywords>
                       <ows:ServiceType>OGC WMTS</ows:ServiceType>
                       <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
-                      <ows:Fees>Einige Layer sind frei, andere nicht. Freemium Tier bis zu 25&#39;000 Megapixel/Jahr für die nicht freien Layer</ows:Fees>
-                      <ows:AccessConstraints>Anmeldung erforderlich: www.geo.admin.ch/api-signup</ows:AccessConstraints>
+                      <ows:Fees>Die Nutzung des Dienstes ist kostenlos unter Berücksichtigung der Bestimmungen zum Fair Use. www.geo.admin.ch/terms-of-use/ows:Fees>
+                      <ows:AccessConstraints>Bei übermässiger Nutzung von Geodiensten kann der Zugang eingeschränkt oder verweigert werden. In diesem Fällen kann swisstopo mit dem Datennutzer / der Datennutzerin einen Vertrag abschliessen (Art. 44 Abs. 2 GeoIV) www.geo.admin.ch/terms-of-use.</ows:AccessConstraints>
                   </ows:ServiceIdentification>
                   <ows:ServiceProvider>
                       <ows:ProviderName>Bundesamt für Landestopografie swisstopo</ows:ProviderName>
