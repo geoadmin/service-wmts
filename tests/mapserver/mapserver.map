@@ -1,0 +1,171 @@
+# Start of map file
+#
+#  Simple Mapfile
+#
+#  Doing nothing useful but to check config and mapserver are running well
+#
+
+MAP
+  DEFRESOLUTION 96
+  EXTENT 140000 -240000 1380000 580000
+  IMAGETYPE "jpeg"
+  MAXSIZE 1000
+  NAME "WMS"
+  RESOLUTION 96
+  SIZE -1 -1
+  STATUS ON
+  UNITS METERS
+
+  PROJECTION
+    "init=epsg:2056"
+  END # PROJECTION
+
+  SCALEBAR
+    BACKGROUNDCOLOR 0 0 0
+    IMAGECOLOR 255 255 255
+    INTERVALS 5
+    LABEL
+      SIZE SMALL
+      OFFSET 0 0
+      OUTLINECOLOR 255 255 255
+      SHADOWSIZE 1 1
+      TYPE BITMAP
+    END # LABEL
+    OUTLINECOLOR 0 0 0
+    SIZE 300 7
+    STATUS ON
+    STYLE 1
+    UNITS KILOMETERS
+  END # SCALEBAR
+
+  WEB
+    METADATA
+      "wms_srs" "epsg:2056 epsg:21781 epsg:4326 epsg:3857 epsg:3034 epsg:3035 epsg:4258 epsg:31287 epsg:25832 epsg:25833 epsg:31467 epsg:32632 epsg:32633 epsg:900913"
+      "ows_accesscontraints"  "license"
+      "wms_enable_request"  "*"
+      "wms_stateorprovince" "Kanton Bern"
+      "ows_encoding"  "utf-8"
+      "wms_abstract"  "Daten für geo.admin.ch"
+      "wms_contactvoicetelephone" "+41 (0)31 / 963 21 11"
+      "wms_contactorganization" "Bundesamt für Landestopografie swisstopo"
+      "wms_contactperson" "mailto:webgis@swisstopo.ch"
+      "wms_extent"  "100000 50000 850000 400000"
+      "wms_contactfacsimiletelephone" "+41 (0)31 / 963 24 59"
+      "wms_address" "Seftigenstrasse 264"
+      "ows_enable_request"  "*"
+      "wms_feature_info_mime_type"  "text/plain"
+      "wms_country" "Schweiz"
+      "wms_postcode"  "3084"
+      "wms_contactelectronicmailadress" "webgis@swisstopo.ch"
+      "ows_fees"  "none"
+      "wms_keywordlist" "simple test docker"
+      "wms_encoding"  "UTF-8"
+      "wms_addresstype" "text/html"
+      "wms_feature_mime_type" "text/html"
+      "wms_city"  "Wabern"
+      "wms_title" "swisstopo - Bundesamt für Landestopographie"
+    END # METADATA
+    TEMPLATE "ttt"
+  END # WEB
+
+# Auto-generated includes
+OUTPUTFORMAT
+  NAME "gif"
+  DRIVER "GD/GIF"
+  MIMETYPE "image/gif"
+  IMAGEMODE PC256
+  EXTENSION "gif"
+  TRANSPARENT FALSE
+END
+OUTPUTFORMAT
+  NAME "png"
+  MIMETYPE "image/png"
+  DRIVER "AGG/PNG"
+  EXTENSION "png"
+  IMAGEMODE RGBA
+  TRANSPARENT TRUE
+  FORMATOPTION "INTERLACE=OFF"
+END
+OUTPUTFORMAT
+  NAME "AGGA"
+  DRIVER "AGG/PNG"
+  IMAGEMODE RGBA
+END
+OUTPUTFORMAT
+  NAME "pnga"
+  MIMETYPE "image/pnga"
+  DRIVER "AGG/PNG"
+  EXTENSION "png"
+  IMAGEMODE RGBA
+  TRANSPARENT TRUE
+  FORMATOPTION "INTERLACE=OFF"
+END
+OUTPUTFORMAT
+  NAME "png32"
+  MIMETYPE "image/png; mode=32bit"
+  DRIVER "AGG/PNG"
+  EXTENSION "png"
+  IMAGEMODE RGBA
+  TRANSPARENT TRUE
+  FORMATOPTION "INTERLACE=OFF"
+END
+OUTPUTFORMAT
+  NAME "jpeg"
+  DRIVER "AGG/JPEG"
+  MIMETYPE "image/jpeg"
+  IMAGEMODE RGB
+  FORMATOPTION "QUALITY=88"
+  EXTENSION "jpg"
+END
+OUTPUTFORMAT
+  NAME "GTiff"
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE RGB
+  FORMATOPTION "COMPRESS=PACKBITS"
+  EXTENSION "tif"
+END
+OUTPUTFORMAT
+  NAME "GEOJSON"
+  DRIVER "OGR/GEOJSON"
+  MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+  FORMATOPTION "STORAGE=memory"
+  FORMATOPTION "FORM=SIMPLE"
+  FORMATOPTION "LCO:COORDINATE_PRECISION=3"
+  FORMATOPTION "LCO:WRITE_BBOX=YES"
+END
+
+
+LAYER
+  NAME inline_points
+  TYPE POINT
+  STATUS DEFAULT
+  METADATA
+    "wms_enable_request" "*"
+    "wms_extent" "2100000 1050000 2850000 1400000"
+    "wms_title" "Dummy inline points layer"
+  END
+  FEATURE
+    POINTS
+      2600000 1200000  
+    END
+    TEXT "Origin of the (swiss) world"
+  END
+  FEATURE
+    POINTS
+      2605000 1205000
+      2610000 1200000 
+      2600000 1205000 
+    END
+    TEXT "Some points"
+  END
+  CLASS
+    STYLE
+      COLOR 0 0 250
+      SYMBOL 'circle'
+      SIZE 6
+    END
+  END
+END
+
+END # End mapfile
