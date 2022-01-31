@@ -7,7 +7,7 @@ services:
       - LISTEN_PORT_80=1
     volumes:
       - type: bind
-        source: ${PWD}/tests/mapserver/mapserver.map
+        source: ${PWD}/scripts/local-mapserver/inline_points.map
         target: /etc/mapserver/mapserver.map
   db:
     image: kartoza/postgis:12.0

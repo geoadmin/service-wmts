@@ -9,7 +9,7 @@ services:
       - 8000:80
     volumes:
       - type: bind
-        source: ${PWD}/tests/mapserver/mapserver.map
+        source: ${PWD}/scripts/local-mapserver/inline_points.map
         target: /etc/mapserver/mapserver.map
   db:
     image: kartoza/postgis:12.0
