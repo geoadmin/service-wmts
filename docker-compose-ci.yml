@@ -1,20 +1,14 @@
 version: "3.4"
 services:
   wms-bod:
-    image: swisstopo/mapserver-base:201806061459
+    image: camptocamp/mapserver:7.6
     environment:
-      - APACHE_PORT=80
-      - MS_ERRORFILE=stderr
       - MS_DEBUGLEVEL=0
-      - FCGID_IO_TIMEOUT=30
-      - FCGID_BUSY_TIMEOUT=30
-      - FCGID_BUSY_SCAN_INTERVAL=10
-      - FCGID_IO_TIMEOUT=27
-      - FCGID_BUSY_TIMEOUT=27
-      - FCGID_BUSY_SCAN_INTERVAL=5
-      - FCGID_MAX_PROCESSES=200
-      - FCGID_MAX_REQUESTS_PER_PROCESS=1000
-      - APACHE_LOG_LEVEL=debug
+      - LISTEN_PORT_80=1
+    volumes:
+      - type: bind
+        source: ${PWD}/scripts/local-mapserver/inline_points.map
+        target: /etc/mapserver/mapserver.map
   db:
     image: kartoza/postgis:12.0
     environment:
