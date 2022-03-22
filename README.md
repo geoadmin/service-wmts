@@ -211,6 +211,7 @@ NOTE: `max-age` is usually used by the Browser, while `s-maxage` by the server c
 | AWS_S3_BUCKET_NAME | `service-wmts-cache` | S3 bucket name used for 2nd level caching |
 | AWS_S3_REGION_NAME | | AWS Region |
 | AWS_S3_ENDPOINT_URL | | AWS endpoint url if not standard. This allow to use a local S3 instance with minio |
+| HTTP_CLIENT_TIMEOUT | `1` | HTTP client timeout in seconds for AWS S3 GetTile requests |
 
 ### Get Capabilities settings
 
