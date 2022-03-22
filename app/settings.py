@@ -77,6 +77,9 @@ AWS_BUCKET_HOST = f'{AWS_S3_BUCKET_NAME}.s3-{AWS_S3_REGION_NAME}.amazonaws.com'
 if AWS_S3_ENDPOINT_URL is not None:
     AWS_BUCKET_HOST = urlparse(AWS_S3_ENDPOINT_URL).netloc
 
+# HTTP Client Timeout to access S3 bucket [seconds]
+HTTP_CLIENT_TIMEOUT = int(os.getenv('HTTP_CLIENT_TIMEOUT', '1'))
+
 # SQL Alchemy
 # pylint: disable=line-too-long
 SQLALCHEMY_DATABASE_URI = \

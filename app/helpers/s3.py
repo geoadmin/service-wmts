@@ -2,6 +2,7 @@ import hashlib
 import http.client
 import logging
 from base64 import b64encode
+from socket import timeout as socket_timeout
 from time import perf_counter
 
 import boto3
@@ -58,7 +59,7 @@ def get_s3_file(wmts_path, etag=None):
         path = f"{_get_s3_base_path()}/{wmts_path}"
         logger.debug('Get file from S3: %s%s', settings.AWS_BUCKET_HOST, path)
         http_client = http.client.HTTPConnection(
-            settings.AWS_BUCKET_HOST, timeout=0.5
+            settings.AWS_BUCKET_HOST, timeout=settings.HTTP_CLIENT_TIMEOUT
         )
         http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
@@ -76,7 +77,7 @@ def get_s3_file(wmts_path, etag=None):
                 response.reason
             )
             return None, None
-    except http.client.HTTPException as error:
+    except (http.client.HTTPException, socket_timeout) as error:
         logger.error(
             'Failed to get S3 file %s: %s', wmts_path, error, exc_info=True
         )
