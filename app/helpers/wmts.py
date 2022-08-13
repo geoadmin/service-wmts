@@ -146,22 +146,23 @@ def validate_restriction(gagrid):
         zoom = request.view_args['zoom']
         resolution = gagrid.getResolution(zoom)
         resolution_max = restriction['resolution_max']
+        zoom_max = gagrid.getClosestZoom(resolution_max)
         s3_resolution_max = restriction['s3_resolution_max']
         # convert according to base unit
         if request.view_args['srid'] == 4326:
             resolution = resolution * gagrid.metersPerUnit
-        # max resolution
-        if resolution < resolution_max:
+        # check if the zoomlevel (closestzoom) is supported
+        if zoom > zoom_max:
             logger.error(
                 'Unsupported zoom level %s (resolution: %s), maxzoom is: %s',
                 zoom,
                 resolution,
-                gagrid.getClosestZoom(resolution_max)
+                zoom_max
             )
             abort(
                 400,
                 f'Unsupported zoom level {zoom}, '
-                f'maxzoom is: {gagrid.getClosestZoom(resolution_max)}'
+                f'maxzoom is: {zoom_max}'
             )
         # put tiles to s3
         write_s3 = resolution >= s3_resolution_max
