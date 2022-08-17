@@ -74,7 +74,9 @@ def get_wmts_config_from_db():
         raise
 
     total_records = cursor.rowcount
-    logger.info("Found %s tileset records for wmts config in DB", total_records)
+    logger.debug(
+        "Found %s tileset records for wmts config in DB", total_records
+    )
 
     # iterate through table
     restrictions = {}
