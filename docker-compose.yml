@@ -27,6 +27,7 @@ services:
     image: minio/minio
     env_file: ./minio.env
     command: server /data
+    user: "${USER_ID:?err}:${GROUP_ID:?err}"
     volumes:
       - type: bind
         source: ${PWD}/.volumes/minio
