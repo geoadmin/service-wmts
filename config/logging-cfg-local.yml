@@ -13,7 +13,6 @@ root:
 loggers:
   werkzeug:
     handlers: []
-    level: WARNING
   gunicorn.error:
     level: DEBUG
     handlers:
@@ -47,12 +46,11 @@ filters:
 
 formatters:
   standard:
-    (): logging_utilities.formatters.extra_formatter.ExtraFormatter
     format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
   verbose:
     (): logging_utilities.formatters.extra_formatter.ExtraFormatter
     format: "[%(asctime)s] %(levelname)-8s - %(name)-26s : %(message)s"
-    extra_fmt: " : url=%(request_url)s headers=%(request_headers)s payload=%(request_json)s"
+    extra_fmt: " : path=%(flask_request_path)s headers=%(flask_request_headers)s payload=%(flask_request_json)s"
   json:
     (): logging_utilities.formatters.json_formatter.JsonFormatter
     add_always_extra: False
@@ -76,17 +74,17 @@ formatters:
       excInfo: exc_info
       request:
         id: flask_request_headers.X-Amz-Cf-Id
-        path: flask_request_path
-        method: flask_request_method
-        queryString: flask_request_query_string
-        headers: flask_request_headers
-        remoteAddr: flask_request_remote_addr
+        path: "%(flask_request_path)s"
+        method: "%(flask_request_method)s"
+        queryString: "%(flask_request_query_string)s"
+        headers: flask_request_headers.
+        remoteAddr: "%(flask_request_remote_addr)s"
         payload: "%(flask_request_json).128s"
       response:
         statusCode: response.status_code
-        headers: response.headers
-        duration: response.duration
-        payload: "%(response.payload).128s"
+        headers: response.headers.
+        duration: "%(duration)s"
+        payload: "%(response.json).128s"
       message: message
 
 handlers:
