@@ -24,14 +24,18 @@ class CheckerTests(unittest.TestCase):
         )
 
     def test_backend_checker(self):
-        resp = self.app.get('/wms_checker')
+        resp = self.app.get('/checker/ready')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data, b'OK')
+        self.assertEqual(resp.content_type, "application/json")
+        self.assertEqual(resp.json, {
+            "message": "OK",
+            "success": True,
+        })
 
-    @patch('app.routes.get_wms_backend_root')
-    def test_backend_checker_down(self, mock_get_wms_backend_root):
-        mock_get_wms_backend_root.side_effect = \
+    @patch('app.helpers.wms.get_backend')
+    def test_backend_checker_down(self, mock_get_backend):
+        mock_get_backend.side_effect = \
             requests.exceptions.ConnectionError
-        resp = self.app.get('/wms_checker')
-        mock_get_wms_backend_root.assert_called_once()
+        resp = self.app.get('/checker/ready')
+        mock_get_backend.assert_called_once()
         self.assertEqual(resp.status_code, 502)

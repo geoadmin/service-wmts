@@ -24,9 +24,9 @@ tags:
 paths:
   /checker:
     get:
-      summary: Service checker
+      summary: Liveness checker
       description: Route to check if the service is up.
-      operationId: checker
+      operationId: liveness-checker
       tags:
         - Checker
       responses:
@@ -51,19 +51,29 @@ paths:
                   version: "v0.2.0-beta.1"
         500:
           $ref: "#/components/responses/internalServerError"
-  /wms_checker:
+  /checker/ready:
     get:
-      summary: WMS backend checker
-      description: Route to check if the WMS backend service is up.
-      operationId: wms-checker
+      summary: Readiness checker
+      description: Route to check if the service is ready to serve requests. It also checks the readiness of the WMS backend.
+      operationId: readiness-checker
       tags:
         - Checker
       responses:
         200:
           description: Returning OK.
           content:
-            text/plain:
-                example: OK
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Always true for 200 response.
+                  message:
+                    type: string
+                example:
+                  success: true
+                  message: "OK"
         500:
           $ref: "#/components/responses/internalServerError"
         502:
