@@ -15,6 +15,10 @@ req_session = requests.Session()
 req_session.mount('http://', requests.adapters.HTTPAdapter(max_retries=0))
 
 
+def get_backend(url, **kwargs):
+    return req_session.get(url, **kwargs)
+
+
 def get_wms_params(bbox, gutter, width=256, height=256):
     image_format = get_image_format(request.view_args['extension'])
     return {
@@ -44,11 +48,23 @@ def get_wms_resource(bbox, gutter, width=256, height=256):
 
 
 def get_wms_image(wms_url, params):
-    return req_session.get(wms_url, params=params)
+    return get_backend(wms_url, params=params)
 
 
-def get_wms_backend_root():
-    response = req_session.get(settings.WMS_BACKEND)
+def get_wms_backend_readiness():
+    try:
+        response = get_backend(settings.WMS_BACKEND_READY)
+    except (
+        requests.exceptions.Timeout,
+        requests.exceptions.SSLError,
+        requests.exceptions.ConnectionError
+    ) as error:
+        logger.error(
+            'Cannot connect to backend WMS %s: %s',
+            settings.WMS_BACKEND_READY,
+            error
+        )
+        abort(502, 'Cannot connect to backend WMS')
     return response.content
 
 

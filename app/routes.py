@@ -2,8 +2,6 @@ import logging
 import platform
 import time as _time
 
-import requests.exceptions
-
 from flask import Response
 from flask import abort
 from flask import g
@@ -14,7 +12,7 @@ from flask import request
 from app import app
 from app import settings
 from app.helpers.s3 import get_s3_file
-from app.helpers.wms import get_wms_backend_root
+from app.helpers.wms import get_wms_backend_readiness
 from app.helpers.wmts import prepare_wmts_cached_response
 from app.helpers.wmts import prepare_wmts_response
 from app.helpers.wmts import validate_wmts_mode
@@ -49,17 +47,6 @@ def log_response(response):
     return response
 
 
-@app.route('/checker', methods=['GET'])
-def check():
-    response = make_response(
-        jsonify({
-            'success': True, 'message': 'OK', 'version': APP_VERSION
-        })
-    )
-    response.headers['Cache-Control'] = settings.CHECKER_DEFAULT_CACHE
-    return response
-
-
 @app.route('/info.json')
 def info_json():
     return make_response(
@@ -70,32 +57,32 @@ def info_json():
     )
 
 
-@app.route('/wms_checker')
-def wms_checker():
-    # Mapserver only
+@app.route('/checker', methods=['GET'])
+def liveness():
+    response = make_response(
+        jsonify({
+            'success': True, 'message': 'OK', 'version': APP_VERSION
+        })
+    )
+    return response
+
+
+@app.route('/checker/ready', methods=['GET'])
+def readiness():
     wms_ok_string = 'No query information to decode. ' + \
                     'QUERY_STRING is set, but empty.\n'
-    try:
-        content = get_wms_backend_root()
-    except (
-        requests.exceptions.Timeout,
-        requests.exceptions.SSLError,
-        requests.exceptions.ConnectionError
-    ) as error:
-        logger.error(
-            'Cannot connect to backend WMS %s: %s', settings.WMS_BACKEND, error
-        )
-        abort(502, 'Cannot connect to backend WMS')
+
+    content = get_wms_backend_readiness()
 
     if content.decode('ascii') != wms_ok_string:
         logger.error(
             'Incomprehensible WMS backend %s answer: %s. '
             'WMS is probably not ready yet.',
-            settings.WMS_BACKEND,
+            settings.WMS_BACKEND_READY,
             content.decode('ascii')
         )
         abort(503, 'Incomprehensible answer. WMS is probably not ready yet.')
-    return Response('OK', status=200, mimetype='text/plain')
+    return make_response(jsonify({'success': True, 'message': 'OK'}))
 
 
 @app.route(
