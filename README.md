@@ -20,6 +20,7 @@
   - [General configuration](#general-configuration)
   - [Cache Configuration](#cache-configuration)
   - [WMS configuration](#wms-configuration)
+    - [WMS Backend Connection settings](#wms-backend-connection-settings)
   - [S3 2nd level caching settings](#s3-2nd-level-caching-settings)
   - [Get Capabilities settings](#get-capabilities-settings)
 - [GetTile](#gettile)
@@ -206,6 +207,18 @@ NOTE: `max-age` is usually used by the Browser, while `s-maxage` by the server c
 | BOD_DB_NAME | | WMS database name |
 | BOD_DB_USER | | WMS database user name |
 | BOD_DB_PASSWD | | WMS database user password |
+
+#### WMS Backend Connection settings
+
+See https://requests.readthedocs.io/en/latest/api/#requests.adapters.HTTPAdapter for description of
+the following variables.
+
+| Variable | Default |
+|---|---|
+| WMS_BACKEND_POOL_CONNECTION | `10` |
+| WMS_BACKEND_POOL_MAXSIZE | `10`|
+| WMS_BACKEND_POOL_BLOCK | `False` |
+| WMS_BACKEND_CONNECTION_MAX_RETRY | `0` |
 
 ### S3 2nd level caching settings
 
