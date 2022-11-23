@@ -93,11 +93,13 @@ SQLALCHEMY_TRACK_MODIFICATIONS = strtobool(
 )
 
 SQLALCHEMY_ENGINE_OPTIONS = {
-    'pool_recycle': 20,
-    'pool_size': 20,
-    'max_overflow': -1,
-    'pool_pre_ping': bool(strtobool(os.getenv('SQLALCHEMY_POOL_PRE_PING', 'False'))),
-    'isolation_level': os.getenv('SQLALCHEMY_ISOLTATION_LEVEL', 'READ COMMITTED'),
+    'pool_recycle': int(os.getenv('SQLALCHEMY_POOL_RECYCLE', '20')),
+    'pool_size': int(os.getenv('SQLALCHEMY_POOL_SIZE', '20')),
+    'max_overflow': int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', '-1')),
+    'pool_pre_ping':
+        bool(strtobool(os.getenv('SQLALCHEMY_POOL_PRE_PING', 'False'))),
+    'isolation_level':
+        os.getenv('SQLALCHEMY_ISOLTATION_LEVEL', 'READ COMMITTED'),
 }
 
 LEGENDS_BASE_URL = os.getenv(
