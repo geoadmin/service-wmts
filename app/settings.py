@@ -100,3 +100,13 @@ LEGENDS_BASE_URL = os.getenv(
 UNITTEST_SKIP_XML_VALIDATION = strtobool(
     os.getenv('UNITTEST_SKIP_XML_VALIDATION', 'False')
 )
+
+# WMS Backend connection settings
+WMS_BACKEND_POOL_CONNECTION = int(
+    os.getenv("WMS_BACKEND_POOL_CONNECTION", "10")
+)
+WMS_BACKEND_POOL_MAXSIZE = int(os.getenv("WMS_BACKEND_POOL_MAXSIZE", "10"))
+WMS_BACKEND_POOL_BLOCK = strtobool(os.getenv("WMS_BACKEND_POOL_BLOCK", "False"))
+WMS_BACKEND_CONNECTION_MAX_RETRY = int(
+    os.getenv("WMS_BACKEND_CONNECTION_MAX_RETRY", "0")
+)

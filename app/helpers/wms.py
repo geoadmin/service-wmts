@@ -12,7 +12,15 @@ from app.helpers.utils import get_image_format
 logger = logging.getLogger(__name__)
 
 req_session = requests.Session()
-req_session.mount('http://', requests.adapters.HTTPAdapter(max_retries=0))
+req_session.mount(
+    'http://',
+    requests.adapters.HTTPAdapter(
+        pool_connections=settings.WMS_BACKEND_POOL_CONNECTION,
+        pool_maxsize=settings.WMS_BACKEND_POOL_MAXSIZE,
+        pool_block=settings.WMS_BACKEND_POOL_BLOCK,
+        max_retries=settings.WMS_BACKEND_CONNECTION_MAX_RETRY
+    )
+)
 
 
 def get_backend(url, **kwargs):
