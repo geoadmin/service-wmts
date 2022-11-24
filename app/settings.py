@@ -92,6 +92,16 @@ SQLALCHEMY_TRACK_MODIFICATIONS = strtobool(
     os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False')
 )
 
+SQLALCHEMY_ENGINE_OPTIONS = {
+    'pool_recycle': int(os.getenv('SQLALCHEMY_POOL_RECYCLE', '20')),
+    'pool_size': int(os.getenv('SQLALCHEMY_POOL_SIZE', '20')),
+    'max_overflow': int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', '-1')),
+    'pool_pre_ping':
+        bool(strtobool(os.getenv('SQLALCHEMY_POOL_PRE_PING', 'False'))),
+    'isolation_level':
+        os.getenv('SQLALCHEMY_ISOLTATION_LEVEL', 'READ COMMITTED'),
+}
+
 LEGENDS_BASE_URL = os.getenv(
     "LEGENDS_BASE_URL", "https://api3.geo.admin.ch/static/images/legends"
 )
@@ -100,3 +110,15 @@ LEGENDS_BASE_URL = os.getenv(
 UNITTEST_SKIP_XML_VALIDATION = strtobool(
     os.getenv('UNITTEST_SKIP_XML_VALIDATION', 'False')
 )
+
+# WMS Backend connection settings
+WMS_BACKEND_POOL_CONNECTION = int(
+    os.getenv("WMS_BACKEND_POOL_CONNECTION", "10")
+)
+WMS_BACKEND_POOL_MAXSIZE = int(os.getenv("WMS_BACKEND_POOL_MAXSIZE", "10"))
+WMS_BACKEND_POOL_BLOCK = strtobool(os.getenv("WMS_BACKEND_POOL_BLOCK", "False"))
+WMS_BACKEND_CONNECTION_MAX_RETRY = int(
+    os.getenv("WMS_BACKEND_CONNECTION_MAX_RETRY", "0")
+)
+
+GUNICORN_WORKER_TMP_DIR = os.getenv("GUNICORN_WORKER_TMP_DIR", None)
