@@ -60,7 +60,7 @@ The **Make** targets assume you have
 - **curl**
 - **docker**
 - **docker-compose**
-  
+
 installed.
 
 ### Setting up to work
@@ -176,6 +176,11 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | SCRIPT_NAME | `''` | If the service is behind a reverse proxy and not served at the root, the route prefix must be set in `SCRIPT_NAME`. |
 | WMTS_WORKERS | `0` | WMTS service number of workers. 0 or negative value means that the number of worker are computed from the number of cpu. |
 | WSGI_TIMEOUT | `45`| WSGI timeout. |
+| SQLALCHEMY_POOL_PRE_PING | False | True will enable the connection pool “pre-ping” feature that tests connections for liveness upon each checkout. This will trigger a recycle of outdated, stale connections. Activating this option will help to get rid of `idle connection timeout` errors but has a slight influence on the performance. |
+| SQLALCHEMY_ISOLTATION_LEVEL | `READ COMMITTED` | affects the transaction isolation level of the database connection. |
+| SQLALCHEMY_POOL_RECYCLE | 20 | this setting causes the pool to recycle connections after the given number of seconds has passed |
+| SQLALCHEMY_POOL_SIZE | 20 |  the number of connections to keep open inside the connection pool |
+| SQLALCHEMY_MAX_OVERFLOW | -1 | the number of connections to allow in connection pool “overflow”, -1 will disable overflow. |
 | GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |
 
 ### Cache Configuration
