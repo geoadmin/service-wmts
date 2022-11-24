@@ -176,6 +176,7 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | SCRIPT_NAME | `''` | If the service is behind a reverse proxy and not served at the root, the route prefix must be set in `SCRIPT_NAME`. |
 | WMTS_WORKERS | `0` | WMTS service number of workers. 0 or negative value means that the number of worker are computed from the number of cpu. |
 | WSGI_TIMEOUT | `45`| WSGI timeout. |
+| GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |
 
 ### Cache Configuration
 
