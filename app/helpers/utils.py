@@ -71,18 +71,6 @@ def set_cache_control(headers, restriction):
     return headers
 
 
-def get_image_format(extension):
-    image_format = extension
-    # TODO CLEAN_UP: if the pngjpeg hack is not needed anymore we should
-    # remove it
-    if extension == 'pngjpeg':
-        image_format = 'png'
-        logger.warning(
-            'Extension pngjpeg hack detected for tile  %s', request.path
-        )
-    return image_format
-
-
 def get_closest_zoom(resolution, epsg):
     tilegrid = getTileGrid(int(epsg))()
     return tilegrid.getClosestZoom(float(resolution))
