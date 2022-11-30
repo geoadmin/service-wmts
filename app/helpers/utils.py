@@ -9,7 +9,6 @@ from pyproj import transform
 
 from flask import jsonify
 from flask import make_response
-from flask import request
 
 from app.settings import GET_TILE_BROWSER_CACHE_MAX_TTL
 from app.settings import GET_TILE_CACHE_TEMPLATE
