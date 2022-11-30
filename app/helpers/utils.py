@@ -9,7 +9,6 @@ from pyproj import transform
 
 from flask import jsonify
 from flask import make_response
-from flask import request
 
 from app.settings import GET_TILE_BROWSER_CACHE_MAX_TTL
 from app.settings import GET_TILE_CACHE_TEMPLATE
@@ -69,18 +68,6 @@ def set_cache_control(headers, restriction):
             )
         )
     return headers
-
-
-def get_image_format(extension):
-    image_format = extension
-    # TODO CLEAN_UP: if the pngjpeg hack is not needed anymore we should
-    # remove it
-    if extension == 'pngjpeg':
-        image_format = 'png'
-        logger.warning(
-            'Extension pngjpeg hack detected for tile  %s', request.path
-        )
-    return image_format
 
 
 def get_closest_zoom(resolution, epsg):

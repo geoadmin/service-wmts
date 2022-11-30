@@ -39,10 +39,6 @@
             <TileMatrixSetLink>
                 <TileMatrixSet>{{ epsg }}_{{ layer.resolution_max|get_closest_zoom(epsg) }}</TileMatrixSet>
             </TileMatrixSetLink>
-            {# Zeitreihen has two formats available 'png' (desktop GIS) and (pngjpeg) web gis #}
-            {% if layer.id == 'ch.swisstopo.zeitreihen' and epsg == '21781' %}
-            <ResourceURL format="image/png" resourceType="tile" template="{{ url_base }}1.0.0/{{ layer.id|e|trim }}/default/{Time}/{{ epsg }}/{TileMatrix}/{TileRow}/{TileCol}.png"/>
-            {% endif %}
             {# ## ATTENTION: s3 tiles have a row/col order, mapproxy ones the standard col/row #}
             {% for format in layer.formats %}
             {% if epsg == 21781 %}
