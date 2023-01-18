@@ -76,7 +76,7 @@ def validate_wmts_request():
         logger.error(msg, request.view_args['style_name'])
         abort(400, msg % (request.view_args['style_name']))
 
-    supported_image_formats = ('png', 'jpeg', 'pngjpeg')
+    supported_image_formats = ('png', 'jpeg')
     if request.view_args['extension'] not in supported_image_formats:
         msg = 'Unsupported image format: %s. Only "%s" are supported.'
         logger.error(

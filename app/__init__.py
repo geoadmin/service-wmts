@@ -57,6 +57,11 @@ def add_cors_and_cache_header(response):
         'Access-Control-Allow-Headers',
         'Content-Type, Authorization, x-requested-with, Origin, Accept'
     )
+
+    # overwrite with these 5xx cache settings
+    # no cache on these 5xx errors, they are supposed to be temporary
+    if response.status_code in (502, 503, 504, 507):
+        response.headers['Cache-Control'] = 'no-cache'
     return response
 
 

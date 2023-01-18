@@ -7,7 +7,6 @@ from flask import abort
 from flask import request
 
 from app import settings
-from app.helpers.utils import get_image_format
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ def get_backend(url, **kwargs):
 
 
 def get_wms_params(bbox, gutter, width=256, height=256):
-    image_format = get_image_format(request.view_args['extension'])
+    image_format = request.view_args['extension']
     return {
         'SERVICE': 'WMS',
         'VERSION': '1.3.0',
