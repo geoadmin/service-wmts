@@ -528,7 +528,7 @@ class ErrorRequestsTests(BaseTest):
         )
         mock_wms_image.assert_called()
         self.assertEqual(resp.status_code, 502)
-        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=5')
+        self.assertEqual(resp.headers['Cache-Control'], 'no-cache')
         self.assertIn('Bad Gateway', resp.get_data(as_text=True))
 
     @patch('app.helpers.wms.get_wms_image')
@@ -541,7 +541,7 @@ class ErrorRequestsTests(BaseTest):
         )
         mock_wms_image.assert_called()
         self.assertEqual(resp.status_code, 502)
-        self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=5')
+        self.assertEqual(resp.headers['Cache-Control'], 'no-cache')
         self.assertIn('Unable to verify SSL', resp.get_data(as_text=True))
 
     @patch('app.helpers.wms.get_wms_image')
