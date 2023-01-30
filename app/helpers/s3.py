@@ -78,9 +78,7 @@ def get_s3_file(wmts_path, etag=None):
             )
             return None, None
     except (http.client.HTTPException, socket_timeout) as error:
-        logger.error(
-            'Failed to get S3 file %s: %s', wmts_path, error, exc_info=True
-        )
+        logger.error('Failed to get S3 file %s: %s', wmts_path, error)
         return None, None
     finally:
         if http_client:
