@@ -69,17 +69,37 @@ def add_cors_and_cache_header(response):
 @app.errorhandler(Exception)
 def handle_exception(error):
     if isinstance(error, HTTPException):
-        logger.error(
-            'Request failed code=%d description=%s',
-            error.code,
-            error.description
-        )
+        if error.code == 500:
+            logger.exception(
+                'Request failed code=%d description=%s',
+                error.code,
+                error.description,
+                extra={'response': {
+                    "status_code": error.code,
+                }}
+            )
+        else:
+            logger.error(
+                'Request failed code=%d description=%s',
+                error.code,
+                error.description,
+                extra={'response': {
+                    "status_code": error.code,
+                }}
+            )
+
         if 'Accept' in request.headers and 'text/html' in request.headers[
             'Accept']:
             return error
         return make_error_msg(error.code, error.description)
 
-    logger.exception('Unexpected exception: %s', error)
+    logger.exception(
+        'Unexpected exception: %s',
+        error,
+        extra={'response': {
+            "status_code": 500,
+        }}
+    )
     if 'Accept' in request.headers and 'text/html' in request.headers['Accept']:
         return error
     return make_error_msg(500, "Internal server error, please consult logs")
