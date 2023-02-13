@@ -62,15 +62,14 @@ def get_s3_file(wmts_path, etag=None):
         http_client = http.client.HTTPConnection(
             settings.AWS_BUCKET_HOST, timeout=settings.HTTP_CLIENT_TIMEOUT
         )
-        http_client.request("GET", path, headers=headers)
-        my_socket = http_client.sock
         # Set the following socket options
         # SO_KEEPALIVE: 1 => Enable TCP keepalive
         # TCP_KEEPIDLE: 60 => Time in seconds until the first keepalive is sent
         # TCP_KEEPINTVL: 60 => How often should the keepalive packet be sent
-        my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-        my_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
-        my_socket.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
+        http_client.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        http_client.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
+        http_client.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
+        http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
         if response.status in (200, 304):
             logger.debug('File %s found on S3', wmts_path)
