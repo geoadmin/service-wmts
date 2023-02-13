@@ -16,10 +16,23 @@ from app.helpers.wmts_config import init_wmts_config
 init_wmts_config()
 
 
+class FakeSocket:
+
+    def __init__(self, text, fileclass=io.BytesIO, host=None, port=None):
+        pass
+
+    def close(self):
+        pass
+
+    def setsockopt(self, level, optname, value):
+        pass
+
+
 class HTTPConnectionMock:
 
     def __init__(self, response_mock):
         self._response_mock = response_mock
+        self.sock = FakeSocket(None)
 
     def request(self, *args, **kwargs):
         pass
