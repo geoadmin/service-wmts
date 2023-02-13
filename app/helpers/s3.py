@@ -1,6 +1,7 @@
 import hashlib
 import http.client
 import logging
+import socket
 from base64 import b64encode
 from socket import timeout as socket_timeout
 from time import perf_counter
@@ -61,6 +62,13 @@ def get_s3_file(wmts_path, etag=None):
         http_client = http.client.HTTPConnection(
             settings.AWS_BUCKET_HOST, timeout=settings.HTTP_CLIENT_TIMEOUT
         )
+        # Set the following socket options
+        # SO_KEEPALIVE: 1 => Enable TCP keepalive
+        # TCP_KEEPIDLE: 60 => Time in seconds until the first keepalive is sent
+        # TCP_KEEPINTVL: 60 => How often should the keepalive packet be sent
+        http_client.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        http_client.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
+        http_client.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
         http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
         if response.status in (200, 304):
