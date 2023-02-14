@@ -62,13 +62,17 @@ def get_s3_file(wmts_path, etag=None):
         http_client = http.client.HTTPConnection(
             settings.AWS_BUCKET_HOST, timeout=settings.HTTP_CLIENT_TIMEOUT
         )
-        # Set the following socket options
-        # SO_KEEPALIVE: 1 => Enable TCP keepalive
-        # TCP_KEEPIDLE: 60 => Time in seconds until the first keepalive is sent
-        # TCP_KEEPINTVL: 60 => How often should the keepalive packet be sent
-        http_client.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-        http_client.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
-        http_client.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
+        orig_connect = http.client.HTTPConnection.connect
+
+        def monkey_connect(self):
+            orig_connect(self)
+            # Set the following socket options
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            self.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
+            self.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
+            return self
+
+        http_client.connect = monkey_connect(http_client)
         http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
         if response.status in (200, 304):
