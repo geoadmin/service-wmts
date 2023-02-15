@@ -1,5 +1,4 @@
 import hashlib
-import http.client
 import logging
 import socket
 from base64 import b64encode
@@ -8,6 +7,7 @@ from time import perf_counter
 
 import boto3
 import botocore.exceptions
+import urllib3
 from botocore.client import Config
 
 from app import settings
@@ -59,20 +59,19 @@ def get_s3_file(wmts_path, etag=None):
     try:
         path = f"{_get_s3_base_path()}/{wmts_path}"
         logger.debug('Get file from S3: %s%s', settings.AWS_BUCKET_HOST, path)
-        http_client = http.client.HTTPConnection(
-            settings.AWS_BUCKET_HOST, timeout=settings.HTTP_CLIENT_TIMEOUT
+
+        # custom socket options
+        socket_options = [(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+                          (socket.SOL_TCP, socket.TCP_KEEPIDLE, 120),
+                          (socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)]
+
+        http_client = urllib3.connection.HTTPConnection(
+            settings.AWS_BUCKET_HOST,
+            timeout=settings.HTTP_CLIENT_TIMEOUT,
+            socket_options=socket_options,
+            is_verified=False
         )
-        orig_connect = http.client.HTTPConnection.connect
 
-        def monkey_connect(self):
-            orig_connect(self)
-            # Set the following socket options
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-            self.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
-            self.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
-            return self
-
-        http_client.connect = monkey_connect(http_client)
         http_client.request("GET", path, headers=headers)
         response = http_client.getresponse()
         if response.status in (200, 304):
@@ -89,7 +88,7 @@ def get_s3_file(wmts_path, etag=None):
                 response.reason
             )
             return None, None
-    except (http.client.HTTPException, socket_timeout) as error:
+    except (urllib3.exceptions.TimeoutError, socket_timeout) as error:
         logger.error('Failed to get S3 file %s: %s', wmts_path, error)
         return None, None
     finally:
