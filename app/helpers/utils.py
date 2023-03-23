@@ -87,7 +87,11 @@ def get_default_tile_matrix_set(epsg):
             gagrid.numberOfYTilesAtZoom(zoom),
             gagrid.getScale(zoom)
         ]
-    # TODO CLEAN_UP check if this legacy mistake is still needed
-    tilematrix_set['MAXY'] = gagrid.MAXY if epsg == '4326' else gagrid.MINX
-    tilematrix_set['MINX'] = gagrid.MINX if epsg == '4326' else gagrid.MAXY
+    # Reversing the axis order for 'EPSG:4326' is needed for now. If we switch
+    # to CRS84, the axis order will be (lng, lat) the other projected CRS
+    # (see commit message for a backround information). Between the two systems,
+    # the tiles are fully compatible.
+    # The variable names (minx, maxy) is very unfortunate though.
+    tilematrix_set['MAXY'] = gagrid.MAXY if int(epsg) == 4326 else gagrid.MINX
+    tilematrix_set['MINX'] = gagrid.MINX if int(epsg) == 4326 else gagrid.MAXY
     return tilematrix_set
