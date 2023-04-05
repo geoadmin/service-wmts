@@ -1,7 +1,6 @@
 import hashlib
 import http.client
 import logging
-import socket
 from base64 import b64encode
 from socket import timeout as socket_timeout
 from time import perf_counter
@@ -9,6 +8,7 @@ from time import perf_counter
 import boto3
 import botocore.exceptions
 from botocore.client import Config
+from requests.exceptions import ChunkedEncodingError
 
 from app import settings
 
@@ -62,19 +62,20 @@ def get_s3_file(wmts_path, etag=None):
         http_client = http.client.HTTPConnection(
             settings.AWS_BUCKET_HOST, timeout=settings.HTTP_CLIENT_TIMEOUT
         )
-        orig_connect = http.client.HTTPConnection.connect
-
-        def monkey_connect(self):
-            orig_connect(self)
-            # Set the following socket options
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-            self.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 120)
-            self.sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPINTVL, 120)
-            return self
-
-        http_client.connect = monkey_connect(http_client)
-        http_client.request("GET", path, headers=headers)
-        response = http_client.getresponse()
+        try:
+            http_client.request("GET", path, headers=headers)
+            response = http_client.getresponse()
+        except ChunkedEncodingError as error:
+            # When reading from S3, sporadically TCP connections
+            # have been reset, raising 104 errors. We tried to active TCP
+            # keep alive to avoid such errors, but this did not help
+            logger.warning(
+                'TCP connection has been reset.' \
+                'when requesting file %s. error=%s',
+                path,
+                error
+            )
+            return None, None
         if response.status in (200, 304):
             logger.debug('File %s found on S3', wmts_path)
             return response, response.read()
