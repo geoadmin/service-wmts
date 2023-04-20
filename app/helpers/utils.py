@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import math
 import re
 from datetime import datetime
 
@@ -70,7 +71,15 @@ def set_cache_control(headers, restriction):
     return headers
 
 
-def get_closest_zoom(resolution, epsg):
+def resolution_factor_at_latitude(latitude):
+    return math.cos(latitude * (math.pi / 180.0))
+
+
+# Zoom is defined at the Equator for WebMercator, layer defined at the
+# latitude of Switzerland have to be corrected.
+def get_closest_zoom(resolution, epsg, latitude=0.0):
+    if int(epsg) == 3857:
+        resolution /= resolution_factor_at_latitude(latitude)
     tilegrid = getTileGrid(int(epsg))()
     return tilegrid.getClosestZoom(float(resolution))
 
