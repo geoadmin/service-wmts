@@ -37,7 +37,7 @@
                 {% endfor %}
             </Dimension>
             <TileMatrixSetLink>
-                <TileMatrixSet>{{ epsg }}_{{ layer.resolution_max|get_closest_zoom(epsg) }}</TileMatrixSet>
+                <TileMatrixSet>{{ epsg }}_{{ layer.resolution_max|get_closest_zoom(epsg, latitude=standard_latitude) }}</TileMatrixSet>
             </TileMatrixSetLink>
             {# ## ATTENTION: s3 tiles have a row/col order, mapproxy ones the standard col/row #}
             {% for format in layer.formats %}
