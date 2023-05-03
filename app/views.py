@@ -18,6 +18,8 @@ from app.models import localized_models
 
 logger = logging.getLogger(__name__)
 
+STANDARD_LATITUDE_FOR_SWITZERLAND = 47.0
+
 
 class GetCapabilities(View):
     methods = ['GET']
@@ -107,7 +109,8 @@ class GetCapabilities(View):
             'epsg': epsg,
             'default_tile_matrix_set': get_default_tile_matrix_set(epsg),
             'legend_base_url': app.config["LEGENDS_BASE_URL"],
-            'language': lang
+            'language': lang,
+            'standard_latitude': STANDARD_LATITUDE_FOR_SWITZERLAND
         }
         logger.debug('Data context created in %fs', time.time() - start)
         return context
