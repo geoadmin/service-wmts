@@ -46,7 +46,7 @@ def get_wms_params(bbox, gutter, width=256, height=256):
 
 def get_wms_resource(bbox, gutter, width=256, height=256):
     params = get_wms_params(bbox, gutter, width, height)
-    logger.info(
+    logger.debug(
         'Fetching wms image: %s?%s',
         settings.WMS_BACKEND,
         '&'.join([f'{k}={v}' for k, v in params.items()])
