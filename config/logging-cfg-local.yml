@@ -85,6 +85,7 @@ formatters:
         headers: response.headers.
         duration: "%(duration)s"
         payload: "%(response.json).128s"
+        from_s3_cache: from_s3_cache
       message: message
 
 handlers:
