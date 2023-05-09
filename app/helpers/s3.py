@@ -10,6 +10,8 @@ import botocore.exceptions
 from botocore.client import Config
 from requests.exceptions import ChunkedEncodingError
 
+from flask import g
+
 from app import settings
 
 logger = logging.getLogger(__name__)
@@ -78,6 +80,7 @@ def get_s3_file(wmts_path, etag=None):
             return None, None
         if response.status in (200, 304):
             logger.debug('File %s found on S3', wmts_path)
+            g.setdefault('from_s3_cache', True)
             return response, response.read()
         if response.status in (404, 403):
             # Note depending on S3 configuration, it might return a 403 when an

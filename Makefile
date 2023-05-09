@@ -36,7 +36,7 @@ PIP_FILE_LOCK = Pipfile.lock
 
 # default configuration
 ENV_FILE ?= .env.local
-WMTS_PORT ?= 9000
+WMTS_PORT ?= 5000
 
 # Commands
 PIPENV_RUN := pipenv run

@@ -41,6 +41,7 @@ def log_response(response):
                 "status_code": response.status_code,
                 "headers": dict(response.headers.items())
             },
+            "from_s3_cache": g.get('from_s3_cache', False),
             "duration": _time.time() - g.get('started', _time.time())
         }
     )
