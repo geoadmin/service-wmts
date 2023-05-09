@@ -14,6 +14,7 @@
   - [Setting up to work](#setting-up-to-work)
   - [Running the server locally](#running-the-server-locally)
   - [Unittesting](#unittesting)
+  - [Testing locally](#testing-locally)
   - [Docker helpers](#docker-helpers)
   - [Linting and formatting your work](#linting-and-formatting-your-work)
 - [Service configuration](#service-configuration)
@@ -71,10 +72,10 @@ First, you'll need to clone the repo
 git clone git@github.com:geoadmin/service-wmts
 ```
 
-Then, you can run the dev target to ensure you have everything needed to develop, test and serve locally
+Then, you can run the `setup` target to ensure you have everything needed to develop, test and serve locally
 
 ```bash
-make dev
+make setup
 ```
 
 Then you need to run some local containers (DB, WMS-BOD)
@@ -119,6 +120,16 @@ To run only a single test module/class/method enter:
 pipenv shell # activate the virtual environment
 nose2 -c tests/unittest.cfg -t ${PWD} tests.unit_tests.test_functional
 ```
+
+### Testing locally
+
+To test the localhost server you can use
+
+```bash
+curl http://localhost:5000/1.0.0/inline_points/default/current/4326/15/34136/7882.png
+```
+
+You can then check with the minio browser that a file has been saved on the S3 cache; http://localhost:9001 (use the credentials from [minio.env](minio.env))
 
 ### Docker helpers
 
