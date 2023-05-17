@@ -4,20 +4,20 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-PyYAML = "~=5.4.1"
-gevent = "~=21.1.2"
+PyYAML = "~=6.0"
+gevent = "~=22.10.2"
 gunicorn = "~=20.1.0"
-Flask = "~=2.0.0"
-logging-utilities = "~=3.0"
-boto3 = "~=1.17.60"
-pyproj = "~=3.0.1"
-requests = "~=2.25.1"
+Flask = "~=2.2.5"
+logging-utilities = "~=4.0.0"
+boto3 = "~=1.26.135"
+pyproj = "~=3.2.1"
+requests = "~=2.30.0"
 gatilegrid = "~=0.2.0"
-Pillow = "~=8.2.0"
-python-dotenv = "~=0.17.0"
-psycopg2 = "~=2.8.6"
-SQLAlchemy = "~=1.4.15"
-Flask-SQLAlchemy = "~=2.5.1"
+Pillow = "~=9.5.0"
+python-dotenv = "~=0.21.1"
+psycopg2-binary = "~=2.9.6"
+SQLAlchemy = "~=2.0.13"
+Flask-SQLAlchemy = "~=3.0.3"
 
 [dev-packages]
 yapf = "*"
@@ -30,4 +30,4 @@ pylint-flask-sqlalchemy = "~=0.2.0"
 lxml = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.11"
