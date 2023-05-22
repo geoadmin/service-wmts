@@ -31,7 +31,7 @@ limit-inference-results=100
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_flask_sqlalchemy,pylint_sqlalchemy,pylint_flask
+load-plugins=
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -68,6 +68,8 @@ disable=missing-docstring,
     too-many-arguments,
     too-few-public-methods,
     useless-object-inheritance,
+    superfluous-parens, # flask 
+    no-name-in-module, # flask
     fixme # remove this when done
 
 
@@ -522,6 +524,6 @@ min-public-methods=2
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "BaseException, Exception".
-overgeneral-exceptions=BaseException,
-                       Exception,
-                       StandardError
+overgeneral-exceptions=builtins.BaseException,
+                       builtins.Exception,
+                       builtins.StandardError

@@ -7,7 +7,7 @@ from app import db
 
 class TileSetConcatenated(db.Model):
     __tablename__ = 'view_tileset_concatenated'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
     id = db.Column('fk_dataset_id', db.Unicode, primary_key=True)
     timestamps = db.Column('timestamps', db.ARRAY(db.Unicode))
@@ -65,31 +65,31 @@ class GetCap(object):
 
 class GetCapFr(db.Model, GetCap):
     __tablename__ = 'view_wmts_getcapabilities_fr'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
     query_class = QueryGetCap
 
 
 class GetCapDe(db.Model, GetCap):
     __tablename__ = 'view_wmts_getcapabilities_de'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
     query_class = QueryGetCap
 
 
 class GetCapEn(db.Model, GetCap):
     __tablename__ = 'view_wmts_getcapabilities_en'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
     query_class = QueryGetCap
 
 
 class GetCapIt(db.Model, GetCap):
     __tablename__ = 'view_wmts_getcapabilities_it'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
     query_class = QueryGetCap
 
 
 class GetCapRm(db.Model, GetCap):
     __tablename__ = 'view_wmts_getcapabilities_rm'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
     query_class = QueryGetCap
 
 
@@ -107,27 +107,27 @@ class GetCapThemes(object):
 
 class GetCapThemesFr(db.Model, GetCapThemes):
     __tablename__ = 'view_wmts_getcapabilities_themes_fr'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class GetCapThemesDe(db.Model, GetCapThemes):
     __tablename__ = 'view_wmts_getcapabilities_themes_de'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class GetCapThemesIt(db.Model, GetCapThemes):
     __tablename__ = 'view_wmts_getcapabilities_themes_it'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class GetCapThemesRm(db.Model, GetCapThemes):
     __tablename__ = 'view_wmts_getcapabilities_themes_rm'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class GetCapThemesEn(db.Model, GetCapThemes):
     __tablename__ = 'view_wmts_getcapabilities_themes_en'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class ServiceMetadata(object):
@@ -143,27 +143,27 @@ class ServiceMetadata(object):
 
 class ServiceMetadataDe(db.Model, ServiceMetadata):
     __tablename__ = 'view_wmts_service_metadata_de'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class ServiceMetadataFr(db.Model, ServiceMetadata):
     __tablename__ = 'view_wmts_service_metadata_fr'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class ServiceMetadataIt(db.Model, ServiceMetadata):
     __tablename__ = 'view_wmts_service_metadata_it'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class ServiceMetadataRm(db.Model, ServiceMetadata):
     __tablename__ = 'view_wmts_service_metadata_rm'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 class ServiceMetadataEn(db.Model, ServiceMetadata):
     __tablename__ = 'view_wmts_service_metadata_en'
-    __table_args__ = ({'schema': 'service-wmts', 'autoload': False})
+    __table_args__ = ({'schema': 'service-wmts'})
 
 
 localized_models = {
