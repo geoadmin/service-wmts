@@ -23,8 +23,9 @@ Flask-SQLAlchemy = "~=3.0.3"
 yapf = "*"
 nose2 = "*"
 pylint = "*"
+pylint_sqlalchemy = "~=0.2.0"
+pylint_flask = "~=0.6"
 requests-mock = "*"
-
 lxml = "*"
 
 [requires]
