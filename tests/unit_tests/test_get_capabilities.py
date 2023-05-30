@@ -105,7 +105,7 @@ class GetCapabilitiesTest(unittest.TestCase):
                     }
                 )
 
-    @patch('flask_sqlalchemy._QueryProperty.__get__')
+    @patch('flask_sqlalchemy.model._QueryProperty.__get__')
     def test_get_capabilities_no_data_all_routes(self, query_mock):
         query_mock.return_value.all.return_value = []
         for url, url_args, url_params in [(

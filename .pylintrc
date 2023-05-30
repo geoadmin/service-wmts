@@ -31,7 +31,7 @@ limit-inference-results=100
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_flask_sqlalchemy,pylint_sqlalchemy,pylint_flask
+load-plugins=pylint_sqlalchemy,pylint_flask
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -68,6 +68,7 @@ disable=missing-docstring,
     too-many-arguments,
     too-few-public-methods,
     useless-object-inheritance,
+    superfluous-parens, # flask
     fixme # remove this when done
 
 
@@ -163,7 +164,7 @@ ignored-classes=optparse.Values,thread._local,_thread._local
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis). It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=
+ignored-modules=flask_sqlalchemy
 
 # Show a hint with possible names when a member name was not found. The aspect
 # of finding the hint is based on edit distance.
@@ -522,6 +523,6 @@ min-public-methods=2
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "BaseException, Exception".
-overgeneral-exceptions=BaseException,
-                       Exception,
-                       StandardError
+overgeneral-exceptions=builtins.BaseException,
+                       builtins.Exception,
+                       builtins.StandardError
