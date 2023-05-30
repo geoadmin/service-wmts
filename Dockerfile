@@ -1,5 +1,5 @@
-# Buster slim python 3.7 base image.
-FROM python:3.7-slim-buster as base
+# Buster slim python 3.9 base image.
+FROM python:3.9.16-slim-bullseye as base
 
 RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
 
