@@ -70,8 +70,9 @@ class GetCapabilities(View):
     @classmethod
     def get_layers_zoom_level_set(cls, epsg, layers_capabilities):
         zoom_levels = set()
+        latitude = STANDARD_LATITUDE_FOR_SWITZERLAND if epsg == 3857 else 0.0
         for layer in layers_capabilities:
-            zoom = get_closest_zoom(layer.resolution_max, epsg)
+            zoom = get_closest_zoom(layer.resolution_max, epsg, latitude)
             zoom_levels.add(zoom)
         return zoom_levels
 
