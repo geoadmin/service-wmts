@@ -12,7 +12,7 @@ root:
 loggers:
   werkzeug:
     handlers: []
-    level: WARNING
+    level: DEBUG
   gunicorn.error:
     level: DEBUG
     handlers:
