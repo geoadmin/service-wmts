@@ -4,7 +4,6 @@ disable_existing_loggers: False # this allow to get logger at module level
 root:
   handlers:
     - console
-    - file-standard
     - file-json
   level: DEBUG
   propagate: True
@@ -13,23 +12,19 @@ root:
 loggers:
   werkzeug:
     handlers: []
+    level: DEBUG
   gunicorn.error:
     level: DEBUG
     handlers:
       - console
-      - file-standard
       - file-json
   gunicorn.access:
     level: DEBUG
     handlers:
       - console
-      - file-standard
       - file-json
 
 filters:
-  application:
-    (): logging_utilities.filters.ConstAttribute
-    application: service-wmts
   isotime:
     (): logging_utilities.filters.TimeAttribute
     isotime: False
@@ -43,6 +38,11 @@ filters:
       - remote_addr
       - json
       - query_string
+      - url
+      - view_args
+  const_attributes:
+    (): logging_utilities.filters.ConstAttribute
+    service_type: flask
 
 formatters:
   standard:
@@ -62,32 +62,61 @@ formatters:
       - flask_request_headers
       - flask_request_json
       - flask_request_remote_addr
+      - flask_request_url
+      - flask_request_view_args
+      - service_type
     remove_empty: True
     ignore_missing: True
     fmt:
-      time: utc_isotime
-      level: levelname
-      logger: name
-      module: module
-      function: funcName
-      pidTid: "%(process)x/%(thread)x"
-      excInfo: exc_info
-      request:
-        id: flask_request_headers.X-Amz-Cf-Id
-        path: "%(flask_request_path)s"
-        method: "%(flask_request_method)s"
-        queryString: "%(flask_request_query_string)s"
-        headers: flask_request_headers.
-        remoteAddr: "%(flask_request_remote_addr)s"
-        payload: "%(flask_request_json).128s"
-      response:
-        statusCode: response.status_code
-        headers: response.headers.
-        duration: "%(duration)s"
-        payload: "%(response.json).128s"
-        from_s3_cache: from_s3_cache
-      message: message
+      # Custom fields
+      ppbgdi:
+        app:
+          epsg: flask_request_view_args.srid
+          api:
+            version: flask_request_view_args.version
+          layer:
+            id: flask_request_view_args.layer_id
+            time: flask_request_view_args.time
+            column: flask_request_view_args.col
+            row: flask_request_view_args.row
+            zoom: flask_request_view_args.zoom
 
+      # ECS fields
+      message: message
+      event:
+        category: web
+        created: utc_isotime
+        duration: duration
+        kind: event
+        module: module
+        severity: levelno
+      http:
+        request:
+          body:
+            content: "%(flask_request_json).128s"
+          headers: flask_request_headers.
+          method: "%(flask_request_method)s"
+        response:
+          body:
+            content: "%(response.json).128s"
+          headers: response.headers.
+          status_code: response.status_code
+      log:
+        level: levelname
+        logger: name
+        origin:
+          file:
+            line: lineno
+            name: module
+          function: funcName
+      url:
+        original: flask_request_url
+      process:
+        pid: process
+        thread:
+          id: thread
+      service:
+        type: service_type
 handlers:
   console:
     class: logging.StreamHandler
@@ -96,15 +125,7 @@ handlers:
     filters:
       - isotime
       - flask
-  file-standard:
-    level: DEBUG
-    class: logging.FileHandler
-    formatter: verbose
-    filename: ${LOGS_DIR}/server-standard-logs.txt
-    mode: w
-    filters:
-      - isotime
-      - flask
+      - const_attributes
   file-json:
     level: DEBUG
     class: logging.FileHandler

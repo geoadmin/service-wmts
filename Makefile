@@ -177,8 +177,7 @@ dockerrun: clean_logs dockerbuild $(LOGS_DIR)
 
 .PHONY: lint-spec
 lint-spec:
-	docker run --volume "$(PWD)":/data jamescooke/openapi-validator:0.54.0 -e openapi.yml
-
+	docker run --volume "$(PWD)":/data 974517877189.dkr.ecr.eu-central-1.amazonaws.com/external/openapi/openapi-validator:0.54.0 -e openapi.yml
 
 .PHONY: serve-spec-recod
 serve-spec-redoc:
