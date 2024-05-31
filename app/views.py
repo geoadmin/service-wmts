@@ -27,9 +27,14 @@ class GetCapabilities(View):
     # pylint: disable=arguments-differ
     def dispatch_request(self, version, epsg=None, lang=None):
         validate_version()
+        is_default_epsg = (epsg is None)
+        is_default_lang = (lang is None)
+
         epsg, lang = self.get_and_validate_args(epsg, lang)
 
-        context = self.get_context(self.get_models(lang), epsg, lang)
+        context = self.get_context(
+            self.get_models(lang), epsg, lang, is_default_lang, is_default_epsg
+        )
         return (
             render_template(
                 'WmtsCapabilities.xml.jinja',
@@ -87,7 +92,7 @@ class GetCapabilities(View):
         ).first()
 
     @classmethod
-    def get_context(cls, models, epsg, lang):
+    def get_context(cls, models, epsg, lang, is_default_lang, is_default_epsg):
         start = time.time()
         layers_capabilities = cls.get_layers_capabilities(models['GetCap'])
         logger.debug('GetCap query done in %fs', time.time() - start)
@@ -111,7 +116,9 @@ class GetCapabilities(View):
             'default_tile_matrix_set': get_default_tile_matrix_set(epsg),
             'legend_base_url': app.config["LEGENDS_BASE_URL"],
             'language': lang,
-            'standard_latitude': STANDARD_LATITUDE_FOR_SWITZERLAND
+            'standard_latitude': STANDARD_LATITUDE_FOR_SWITZERLAND,
+            'is_default_lang': is_default_lang,
+            'is_default_epsg': is_default_epsg
         }
         logger.debug('Data context created in %fs', time.time() - start)
         return context

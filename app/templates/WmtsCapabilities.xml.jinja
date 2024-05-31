@@ -7,11 +7,15 @@
               xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd"
               version="1.0.0">
     {% include 'StandardHeader.xml.jinja' +%}
+
+    {% set key_value_lang = ''  if is_default_lang == "True" else '?lang=%s' % language %}
+    {% set url_path_epsg = '' if is_default_epsg == "True" else 'EPSG/%s/' % epsg %}
+
     <ows:OperationsMetadata>
         <ows:Operation name="GetCapabilities">
             <ows:DCP>
                 <ows:HTTP>
-                    <ows:Get xlink:href="{{ url_base }}1.0.0/WMTSCapabilities.xml">
+                    <ows:Get xlink:href="{{ url_base }}{{ url_path_epsg }}1.0.0/WMTSCapabilities.xml{{ key_value_lang }}">
                         <ows:Constraint name="GetEncoding">
                             <ows:AllowedValues>
                                 <ows:Value>REST</ows:Value>
@@ -24,7 +28,7 @@
         <ows:Operation name="GetTile">
             <ows:DCP>
                 <ows:HTTP>
-                    <ows:Get xlink:href="{{ url_base }}">
+                    <ows:Get xlink:href="{{ url_base }}{{ url_path_epsg }}">
                         <ows:Constraint name="GetEncoding">
                             <ows:AllowedValues>
                                 <ows:Value>REST</ows:Value>
@@ -40,5 +44,5 @@
         {% include 'TileMatrixSet.xml.jinja' +%}
     </Contents>
     {% include 'Themes.xml.jinja' +%}
-    <ServiceMetadataURL xlink:href="{{ url_base }}1.0.0/WMTSCapabilities.xml"/>
+    <ServiceMetadataURL xlink:href="{{ url_base }}{{ url_path_epsg }}1.0.0/WMTSCapabilities.xml{{ key_value_lang }}"/>
 </Capabilities>
