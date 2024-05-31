@@ -8,8 +8,8 @@
               version="1.0.0">
     {% include 'StandardHeader.xml.jinja' +%}
 
-    {% set key_value_lang = ''  if is_default_lang == "True" else '?lang=%s' % language %}
-    {% set url_path_epsg = '' if is_default_epsg == "True" else 'EPSG/%s/' % epsg %}
+    {% set key_value_lang = ''  if is_default_lang == True else '?lang=%s' % language %}
+    {% set url_path_epsg = '' if is_default_epsg == True else 'EPSG/%s/' % epsg %}
 
     <ows:OperationsMetadata>
         <ows:Operation name="GetCapabilities">
