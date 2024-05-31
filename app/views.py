@@ -27,9 +27,8 @@ class GetCapabilities(View):
     # pylint: disable=arguments-differ
     def dispatch_request(self, version, epsg=None, lang=None):
         validate_version()
-        is_default_epsg = (epsg is None)
-        is_default_lang = (lang is None)
-
+        is_default_epsg = (epsg is None and request.args.get('epsg') is None)
+        is_default_lang = (lang is None and request.args.get('lang') is None)
         epsg, lang = self.get_and_validate_args(epsg, lang)
 
         context = self.get_context(
