@@ -60,7 +60,7 @@ The **Make** targets assume you have
 - **libpq-dev**
 - **curl**
 - **docker**
-- **docker-compose**
+- **docker-compose-plugin**
 
 installed.
 
@@ -81,7 +81,7 @@ make setup
 Then you need to run some local containers (DB, WMS-BOD)
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 That's it, you're ready to work.
