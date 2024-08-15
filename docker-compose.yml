@@ -1,4 +1,3 @@
-version: "3.4"
 services:
   wms-bod:
     image: camptocamp/mapserver:7.6
