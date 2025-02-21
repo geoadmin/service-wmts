@@ -9,7 +9,7 @@
                 <ows:UpperCorner>11.47757 48.230651</ows:UpperCorner>
             </ows:WGS84BoundingBox>
             <ows:Identifier>{{ layer.id|e|trim }}</ows:Identifier>
-            <ows:Metadata xlink:href="https://www.geocat.ch/geonetwork/srv/ger/md.viewer#/full_view/{{ layer.id_geocat }}"/>
+            <ows:Metadata xlink:href="https://www.geocat.ch/geonetwork/srv/ger/catalog.search#/metadata/{{ layer.id_geocat }}"/>
             <Style>
                 <ows:Title>{{ layer.short_description|d('-', true)|e|trim }}</ows:Title>
                 <ows:Identifier>{{ layer.id|d('-', true)|e|trim }}</ows:Identifier>
@@ -17,10 +17,6 @@
                 <LegendURL format="image/png" xlink:href="{{ legend_base_url }}/{{ layer.id|e|trim }}_{{ language }}.png"/>
                 {% endif %}
             </Style>
-            {# TODO CLEAN_UP remove this special case #}
-            {% if layer.id == 'ch.swisstopo.zeitreihen' and epsg == '21781' %}
-            <Format>image/png</Format>
-            {% endif %}
             {% for format in layer.formats %}
             <Format>image/{{ format }}</Format>
             {% endfor %}
