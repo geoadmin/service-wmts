@@ -20,6 +20,7 @@ from app.version import APP_VERSION
 from app.views import GetCapabilities
 
 logger = logging.getLogger(__name__)
+access_logger = logging.getLogger('app.access_logs')
 
 
 # Log each requests
@@ -31,7 +32,7 @@ def log_request():
 
 @app.after_request
 def log_response(response):
-    logger.info(
+    access_logger.info(
         "%s %s - %s",
         request.method,
         request.path,
