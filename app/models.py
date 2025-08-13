@@ -1,6 +1,6 @@
 from sqlalchemy import or_
 
-from flask_sqlalchemy import BaseQuery
+from flask_sqlalchemy.query import Query
 
 from app import db
 
@@ -19,7 +19,7 @@ class TileSetConcatenated(db.Model):
     cache_ttl = db.Column('cache_ttl', db.Integer)
 
 
-class QueryGetCap(BaseQuery):  # pylint: disable=too-many-ancestors
+class QueryGetCap(Query):  # pylint: disable=too-many-ancestors,abstract-method
 
     def filter_by_staging(self, staging):
         return {
