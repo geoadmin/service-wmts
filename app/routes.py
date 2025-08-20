@@ -99,6 +99,7 @@ def get_tile(
     etag = request.headers.get('If-None-Match', None)
 
     s3_resp = None
+    content = None
     if mode != 'preview':
         s3_resp, content = get_s3_file(request.path.lstrip('/'), etag)
 

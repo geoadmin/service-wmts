@@ -66,11 +66,13 @@ disable=missing-docstring,
     unused-variable,
     pointless-string-statement,
     too-many-arguments,
+    too-many-positional-arguments,
     too-few-public-methods,
     useless-object-inheritance,
     superfluous-parens, # flask
-    fixme # remove this when done
-
+    # there is currently a bug preventing disabling cyclic imports on a specific line
+    # see https://github.com/pylint-dev/pylint/issues/9490
+    cyclic-import
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
