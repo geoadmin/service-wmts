@@ -14,7 +14,7 @@ gevent.monkey.patch_all()
 
 from gunicorn.app.base import BaseApplication
 
-from app import app as application
+from app.app import app as application
 from app.helpers.logging_utils import get_logging_cfg
 from app.helpers.wmts_config import init_wmts_config
 from app.settings import FORWARDED_PROTO_HEADER_NAME

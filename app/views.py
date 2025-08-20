@@ -6,7 +6,7 @@ from flask import render_template
 from flask import request
 from flask.views import View
 
-from app import app
+from app.app import app
 from app.helpers.utils import get_closest_zoom
 from app.helpers.utils import get_default_tile_matrix_set
 from app.helpers.wmts import validate_epsg
