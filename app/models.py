@@ -2,7 +2,7 @@ from sqlalchemy import or_
 
 from flask_sqlalchemy.query import Query
 
-from app import db
+from app.app import db
 
 
 class TileSetConcatenated(db.Model):

@@ -13,4 +13,4 @@ init_logging()
 init_wmts_config()
 
 # pylint: disable=unused-import,wrong-import-position
-from app import app
+from app.app import app
