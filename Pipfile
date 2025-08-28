@@ -15,7 +15,7 @@ requests = "~=2.32"
 gatilegrid = "~=0.2"
 Pillow = "~=11.3"
 python-dotenv = "~=1.1"
-psycopg2-binary = "~=2.9"
+psycopg = {extras = ["binary"], version = "~=3.2"}
 SQLAlchemy = "~=2.0"
 Flask-SQLAlchemy = "~=3.1"
 
