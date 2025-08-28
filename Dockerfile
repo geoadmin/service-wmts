@@ -1,5 +1,4 @@
-# Buster slim python 3.9 base image.
-FROM python:3.9.16-slim-bullseye as base
+FROM python:3.13-slim-bullseye AS base
 
 RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
 
@@ -40,12 +39,16 @@ RUN echo "APP_VERSION = '$VERSION'" > /service-wmts/app/version.py
 
 # ##################################################
 # Testing target
-FROM base as unittest
+FROM base AS unittest
 
 LABEL target=unittest
 
 COPY --chown=geoadmin:geoadmin ./scripts /scripts/
 COPY --chown=geoadmin:geoadmin ./tests   /service-wmts/tests/
+
+RUN apt-get update \
+    && apt-get install -y git \
+    && apt-get clean
 
 RUN cd /tmp && \
     pipenv install --system --deploy --ignore-pipfile --dev
@@ -59,7 +62,7 @@ ENTRYPOINT ["python3", "wsgi.py"]
 
 # ##################################################
 # Production target
-FROM base as production
+FROM base AS production
 
 LABEL target=production
 

@@ -14,7 +14,7 @@ gevent.monkey.patch_all()
 
 from gunicorn.app.base import BaseApplication
 
-from app import app as application
+from app.app import app as application
 from app.helpers.logging_utils import get_logging_cfg
 from app.helpers.wmts_config import init_wmts_config
 from app.settings import FORWARDED_PROTO_HEADER_NAME
@@ -37,8 +37,7 @@ class StandaloneApplication(BaseApplication):
     def load_config(self):
         config = {
             key: value
-            for key,
-            value in self.options.items()
+            for key, value in self.options.items()
             if key in self.cfg.settings and value is not None
         }
         for key, value in config.items():

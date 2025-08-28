@@ -66,11 +66,10 @@ disable=missing-docstring,
     unused-variable,
     pointless-string-statement,
     too-many-arguments,
+    too-many-positional-arguments,
     too-few-public-methods,
     useless-object-inheritance,
-    superfluous-parens, # flask
-    fixme # remove this when done
-
+    superfluous-parens # flask
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
