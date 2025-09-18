@@ -1,7 +1,7 @@
 import logging
 import time
 
-import psycopg2 as psy
+import psycopg as psy
 
 from app import settings
 
@@ -46,10 +46,16 @@ def connect_to_db():
                 retries,
                 error
             )
-            if error.pgerror:
-                logger.error('pgerror: %s', error.pgerror)
-            if error.diag.message_detail:
-                logger.error('message detail: %s', error.diag.message_detail)
+            # Log diagnostic info if available
+            if hasattr(error, 'diag') and error.diag:
+                if error.diag.message_detail:
+                    logger.error(
+                        'message detail: %s', error.diag.message_detail
+                    )
+                if error.diag.sqlstate:
+                    logger.error('SQL state: %s', error.diag.sqlstate)
+                if error.diag.message_hint:
+                    logger.error('message hint: %s', error.diag.message_hint)
             retries -= 1
             if retries < 0:
                 raise
@@ -60,7 +66,7 @@ def get_wmts_config_from_db():
     connection = connect_to_db()
 
     # Open cursor for DB-Operations
-    cursor = connection.cursor()
+    cursor = connection.cursor()  # pylint: disable=no-member
 
     try:
         # select records from DB
