@@ -97,9 +97,10 @@ if AWS_S3_ENDPOINT_URL is not None:
 HTTP_CLIENT_TIMEOUT = int(os.getenv('HTTP_CLIENT_TIMEOUT', '1'))
 
 # SQL Alchemy
+# "+psycopg" is required to make SQLAlchemy use psycopg3
 # pylint: disable=line-too-long
 SQLALCHEMY_DATABASE_URI = \
-    f"postgresql://{BOD_DB_USER}:{BOD_DB_PASSWD}@{BOD_DB_HOST}:{BOD_DB_PORT}/{BOD_DB_NAME}"
+    f"postgresql+psycopg://{BOD_DB_USER}:{BOD_DB_PASSWD}@{BOD_DB_HOST}:{BOD_DB_PORT}/{BOD_DB_NAME}"
 
 # SQL Alchemy settings
 SQLALCHEMY_TRACK_MODIFICATIONS = strtobool(
