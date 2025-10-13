@@ -19,6 +19,7 @@ from app.helpers.logging_utils import get_logging_cfg
 from app.helpers.wmts_config import init_wmts_config
 from app.settings import FORWARDED_PROTO_HEADER_NAME
 from app.settings import FORWARED_ALLOW_IPS
+from app.settings import GUNICORN_KEEPALIVE
 from app.settings import GUNICORN_WORKER_TMP_DIR
 from app.settings import WMTS_PORT
 from app.settings import WMTS_WORKERS
@@ -64,6 +65,7 @@ if __name__ == '__main__':
         'workers': WMTS_WORKERS,
         'worker_tmp_dir': GUNICORN_WORKER_TMP_DIR,
         'timeout': WSGI_TIMEOUT,
+        'keepalive': GUNICORN_KEEPALIVE,
         'access_log_format':
             '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(B)s Bytes '
             '"%(f)s" "%(a)s" %(L)ss',
