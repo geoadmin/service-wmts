@@ -194,6 +194,7 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | SQLALCHEMY_POOL_SIZE | 20 |  the number of connections to keep open inside the connection pool |
 | SQLALCHEMY_MAX_OVERFLOW | -1 | the number of connections to allow in connection pool “overflow”, -1 will disable overflow. |
 | GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |
+| GUNICORN_KEEPALIVE | `2` | The [`keepalive`](https://docs.gunicorn.org/en/stable/settings.html#keepalive) setting passed to gunicorn. |
 
 ### Cache Configuration
 
