@@ -37,6 +37,7 @@
   - [Redoc Renderer](#redoc-renderer)
   - [Swagger UI Renderer](#swagger-ui-renderer)
   - [Spec linting](#spec-linting)
+- [Updating Packages](#updating-packages)
 
 ## Summary of the project
 
@@ -193,6 +194,7 @@ All settings can be found in [app/settings.py](app/settings.py) but here below y
 | SQLALCHEMY_POOL_SIZE | 20 |  the number of connections to keep open inside the connection pool |
 | SQLALCHEMY_MAX_OVERFLOW | -1 | the number of connections to allow in connection pool “overflow”, -1 will disable overflow. |
 | GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |
+| GUNICORN_KEEPALIVE | `2` | The [`keepalive`](https://docs.gunicorn.org/en/stable/settings.html#keepalive) setting passed to gunicorn. |
 
 ### Cache Configuration
 
@@ -343,3 +345,28 @@ See also [Swagger UI Installation](https://swagger.io/docs/open-source-tools/swa
 ### Spec linting
 
 The OpenAPI follow some rules and must be validated using `make lint-spec`
+
+## Updating Packages
+
+All packages used in production are pinned to a major version. Automatically updating these packages
+will use the latest minor (or patch) version available. Packages used for development, on the other
+hand, are not pinned unless they need to be used with a specific version of a production package
+(for example, boto3-stubs for boto3).
+
+To update the packages to the latest minor/compatible versions, run:
+
+```bash
+pipenv update --dev
+```
+
+To see what major/incompatible releases would be available, run:
+
+```bash
+pipenv update --dev --outdated
+```
+
+To update packages to a new major release, run:
+
+```bash
+pipenv install logging-utilities~=5.0
+```
