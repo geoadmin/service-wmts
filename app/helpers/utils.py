@@ -104,3 +104,18 @@ def get_default_tile_matrix_set(epsg):
     tilematrix_set['MAXY'] = gagrid.MAXY if int(epsg) == 4326 else gagrid.MINX
     tilematrix_set['MINX'] = gagrid.MINX if int(epsg) == 4326 else gagrid.MAXY
     return tilematrix_set
+
+
+def strtobool(val):
+    """Convert a string representation of truth to True or False.
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1';
+    False values are 'n', 'no', 'f', 'false', 'off', and '0'.
+    Raises ValueError if 'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return True
+    if val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return False
+    raise ValueError(f"invalid truth value: {val}")

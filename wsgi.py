@@ -7,10 +7,22 @@ Thus we patch the ssl module through gevent.monkey.patch_all before any other
 import, especially the app import, which would cause the boto module to be
 loaded, which would in turn load the ssl module.
 """
-# pylint: disable=wrong-import-position,wrong-import-order
+# pylint: disable=wrong-import-position,wrong-import-order,ungrouped-imports
 import gevent.monkey
 
 gevent.monkey.patch_all()
+
+# Initialize OTEL.
+# Initialize should be called as early as possible, but at least before the app is imported
+# The order has a impact on how the libraries are instrumented. If called after app import,
+# e.g. the flask instrumentation has no effect. See:
+# https://github.com/open-telemetry/opentelemetry.io/blob/main/content/en/docs/zero-code/python/troubleshooting.md#use-programmatic-auto-instrumentation
+
+from app.helpers.otel import initialize
+from app.helpers.otel import initialize_flask
+from app.helpers.otel import setup_trace_provider
+
+initialize()
 
 from gunicorn.app.base import BaseApplication
 
@@ -24,6 +36,15 @@ from app.settings import GUNICORN_WORKER_TMP_DIR
 from app.settings import WMTS_PORT
 from app.settings import WMTS_WORKERS
 from app.settings import WSGI_TIMEOUT
+
+initialize_flask(application)
+
+
+def post_fork(server, worker):
+    server.log.info("Worker spawned (pid: %s)", worker.pid)
+
+    # Setup OTEL providers for this worker
+    setup_trace_provider()
 
 
 class StandaloneApplication(BaseApplication):
@@ -65,6 +86,7 @@ if __name__ == '__main__':
         'workers': WMTS_WORKERS,
         'worker_tmp_dir': GUNICORN_WORKER_TMP_DIR,
         'timeout': WSGI_TIMEOUT,
+        'post_fork': post_fork,
         'keepalive': GUNICORN_KEEPALIVE,
         'access_log_format':
             '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(B)s Bytes '
