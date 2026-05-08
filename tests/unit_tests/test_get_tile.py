@@ -261,10 +261,11 @@ class InvalidRequestTests(BaseTest):
 
     def test_wmts_4326_unsupported_zoom(self, mock_get_s3_file):
         mock_get_s3_file.return_value = self.mock_get_s3_file_conn_nok
-        resp = self.app.get(
-            '1.0.0/inline_points/default/current/4326/18/273577/63352.png'
-            '?mode=preview'
-        )
+        with patch.object(settings, 'APP_STAGING', 'test'):
+            resp = self.app.get(
+                '1.0.0/inline_points/default/current/4326/18/273577/63352.png'
+                '?mode=preview'
+            )
         self.assertEqual(resp.status_code, 400)
         self.assertCacheControl(resp)
 
@@ -296,10 +297,11 @@ class GetTileRequestsTests(BaseTest):
         mock_get_s3_file.return_value = self.mock_get_s3_file_conn_ok
         self.get_wms_request_mock(mock_wms)
 
-        resp = self.app.get(
-            '/1.0.0/inline_points/' +
-            'default/current/21781/20/76/44.png?mode=preview'
-        )
+        with patch.object(settings, 'APP_STAGING', 'test'):
+            resp = self.app.get(
+                '/1.0.0/inline_points/' +
+                'default/current/21781/20/76/44.png?mode=preview'
+            )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp.headers['Cache-Control'],
@@ -477,10 +479,11 @@ class GetTileRequestsS3Tests(BaseTest):
             'app.helpers.wmts.handle_2nd_level_cache',
             wraps=handle_2nd_level_cache_wrapper
         ) as mock_handle_2nd_level_cache:
-            resp = self.app.get(
-                '/1.0.0/inline_points/default/current/21781/20/76/44.png'
-                '?mode=preview'
-            )
+            with patch.object(settings, 'APP_STAGING', 'test'):
+                resp = self.app.get(
+                    '/1.0.0/inline_points/default/current/21781/20/76/44.png'
+                    '?mode=preview'
+                )
             self.assertEqual(resp.status_code, 200)
             mock_handle_2nd_level_cache.assert_called()
         self.assertEqual(
@@ -507,9 +510,10 @@ class GetTileRequestsFromS3Tests(BaseTest):
     ):
         mock_get_s3_file.return_value = self.mock_get_s3_file_conn_ok
 
-        resp = self.app.get(
-            '1.0.0/inline_points/default/current/2056/17/4/7.png?mode=preview'
-        )
+        with patch.object(settings, 'APP_STAGING', 'test'):
+            resp = self.app.get(
+                '1.0.0/inline_points/default/current/2056/17/4/7.png?mode=preview'
+            )
         self.assertEqual(resp.status_code, 200)
         self.assert2ndCacheHeader(resp, False)
 
@@ -584,9 +588,10 @@ class ErrorRequestsTests(BaseTest):
             headers={'Content-Type': 'text/xml; charset=UTF-8'}
         )
 
-        resp = self.app.get(
-            '/1.0.0/inline_points/' +
-            'default/current/21781/20/76/44.png?mode=preview'
-        )
+        with patch.object(settings, 'APP_STAGING', 'test'):
+            resp = self.app.get(
+                '/1.0.0/inline_points/' +
+                'default/current/21781/20/76/44.png?mode=preview'
+            )
         self.assertEqual(resp.status_code, 501)
         self.assertEqual(resp.headers['Cache-Control'], 'public, max-age=5')
