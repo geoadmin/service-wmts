@@ -53,7 +53,9 @@ def prepare_wmts_cached_response(s3_resp):
 
 def validate_wmts_mode():
     mode = request.args.get('mode', settings.DEFAULT_MODE)
-    supported_modes = ('default', 'preview')
+    supported_modes = ('default',) if settings.APP_STAGING == 'prod' else (
+        'default', 'preview'
+    )
     if mode not in supported_modes:
         msg = 'Unsupported mode: %s. Only "%s" are supported.'
         logger.error(msg, mode, ", ".join(supported_modes))
