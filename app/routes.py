@@ -71,17 +71,19 @@ def liveness():
 
 @app.route('/checker/ready', methods=['GET'])
 def readiness():
-    wms_ok_string = 'No query information to decode. ' + \
-                    'QUERY_STRING is set, but empty.\n'
+    wms_ok_marker = (
+        'No query information to decode. QUERY_STRING is set, but empty.'
+    )
 
     content = get_wms_backend_readiness()
 
-    if content.decode('ascii') != wms_ok_string:
+    content_str = content.decode('ascii', errors='replace')
+    if wms_ok_marker not in content_str:
         logger.error(
             'Incomprehensible WMS backend %s answer: %s. '
             'WMS is probably not ready yet.',
             settings.WMS_BACKEND_READY,
-            content.decode('ascii')
+            content_str
         )
         abort(503, 'Incomprehensible answer. WMS is probably not ready yet.')
     return make_response(jsonify({'success': True, 'message': 'OK'}))
