@@ -39,3 +39,20 @@ class CheckerTests(unittest.TestCase):
         resp = self.app.get('/checker/ready')
         mock_get_backend.assert_called_once()
         self.assertEqual(resp.status_code, 502)
+
+    @patch('app.routes.get_wms_backend_readiness')
+    def test_backend_checker_ready(self, mock_readiness):
+        mock_readiness.return_value = (
+            b'No query information to decode. QUERY_STRING is set, but empty.'
+        )
+        resp = self.app.get('/checker/ready')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json, {'success': True, 'message': 'OK'})
+
+    @patch('app.routes.get_wms_backend_readiness')
+    def test_backend_checker_missing_marker(self, mock_readiness):
+        mock_readiness.return_value = (
+            b'<HTML><BODY>Apache is up but MapServer is not.</BODY></HTML>'
+        )
+        resp = self.app.get('/checker/ready')
+        self.assertEqual(resp.status_code, 503)
